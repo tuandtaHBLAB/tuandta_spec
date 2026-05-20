@@ -1,0 +1,11 @@
+{
+  "partId": "part3",
+  "questionId": "q5",
+  "questionPrompt": "Sakura Cafeのクーポンを持っています。友人を誘う会話を始めてみましょう。",
+  "startedAt": "2026-05-19T10:28:35.082Z",
+  "endedAt": "2026-05-19T10:29:15.366Z",
+  "highRiskCount": 0,
+  "warnings": 2,
+  "snapshotCount": 2,
+  "nextStep": "Send artifacts to Azure AI scoring pipeline"
+}

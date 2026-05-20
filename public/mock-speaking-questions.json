@@ -1,0 +1,106 @@
+{
+  "parts": [
+    {
+      "id": "part1",
+      "title": "Part 1 - 発音",
+      "description": "短い文章を読み、発音とアクセントを確認します。",
+      "introAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+      "startWithinSeconds": 60,
+      "questions": [
+        {
+          "id": "q1",
+          "prompt": "あなた自身と学習環境について、短く自己紹介してください。",
+          "questionAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
+          "prepSeconds": 15,
+          "answerSeconds": 45,
+          "tips": "はっきりした発音で、自然なスピードを意識しましょう。"
+        }
+      ]
+    },
+    {
+      "id": "part2",
+      "title": "Part 2 - 応答",
+      "description": "場面を見て、適切な返答を行います。",
+      "introAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+      "startWithinSeconds": 60,
+      "questions": [
+        {
+          "id": "q2",
+          "prompt": "先輩から「同僚の結婚祝いを選びたい」と相談されました。どのように提案しますか。",
+          "imageUrl": "https://placehold.co/960x540/e2e8f0/0f172a?text=Part+2+-+Wedding+Gift+Situation",
+          "questionAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3",
+          "prepSeconds": 5,
+          "answerSeconds": 30,
+          "tips": "理由、予算、渡し方まで具体的に話しましょう。"
+        },
+        {
+          "id": "q3",
+          "prompt": "会議後に先輩から「よくできていたね」と言われました。どう返しますか。",
+          "questionAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3",
+          "prepSeconds": 5,
+          "answerSeconds": 30,
+          "tips": "感謝と謙虚さが伝わる表現を使いましょう。"
+        },
+        {
+          "id": "q4",
+          "prompt": "取引先から今夜の食事に誘われましたが予定があります。丁寧に断るにはどうしますか。",
+          "questionAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3",
+          "prepSeconds": 5,
+          "answerSeconds": 30,
+          "tips": "相手への配慮と代替案を入れると自然です。"
+        }
+      ]
+    },
+    {
+      "id": "part3",
+      "title": "Part 3 - 会話",
+      "description": "複数人の会話に参加する想定で話します。",
+      "introAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+      "startWithinSeconds": 60,
+      "questions": [
+        {
+          "id": "q5",
+          "prompt": "Sakura Cafeのクーポンを持っています。友人を誘う会話を始めてみましょう。",
+          "imageUrl": "https://placehold.co/960x540/fef3c7/7c2d12?text=Part+3+-+Cafe+Conversation",
+          "questionAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3",
+          "prepSeconds": 10,
+          "answerSeconds": 40,
+          "tips": "場所、時間、誘う理由を簡潔にまとめましょう。"
+        },
+        {
+          "id": "q6",
+          "prompt": "チームで在宅勤務について議論しています。賛成または反対の立場で意見を述べてください。",
+          "questionAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3",
+          "prepSeconds": 10,
+          "answerSeconds": 40,
+          "tips": "生産性、コミュニケーション、健康面の観点を入れましょう。"
+        }
+      ]
+    },
+    {
+      "id": "part4",
+      "title": "Part 4 - スピーチ",
+      "description": "提示されたテーマで短いスピーチを行います。",
+      "introAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+      "startWithinSeconds": 60,
+      "questions": [
+        {
+          "id": "q7",
+          "prompt": "あなたが住んでいる街の魅力と、好きな理由を話してください。",
+          "questionAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-14.mp3",
+          "prepSeconds": 60,
+          "answerSeconds": 60,
+          "tips": "生活環境、文化、便利さ、個人的な体験を織り込みましょう。"
+        },
+        {
+          "id": "q8",
+          "prompt": "「大人がマンガを読むこと」について、あなたの考えを述べてください。",
+          "questionAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3",
+          "prepSeconds": 60,
+          "answerSeconds": 60,
+          "tips": "学習、娯楽、社会的イメージの観点から論じましょう。"
+        }
+      ]
+    }
+  ]
+}

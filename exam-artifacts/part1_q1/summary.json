@@ -1,0 +1,11 @@
+{
+  "partId": "part1",
+  "questionId": "q1",
+  "questionPrompt": "あなた自身と学習環境について、短く自己紹介してください。",
+  "startedAt": "2026-05-20T04:02:04.788Z",
+  "endedAt": "2026-05-20T04:03:04.824Z",
+  "highRiskCount": 0,
+  "warnings": 8,
+  "snapshotCount": 20,
+  "nextStep": "Send artifacts to Azure AI scoring pipeline"
+}

@@ -1,0 +1,11 @@
+{
+  "partId": "part2",
+  "questionId": "q2",
+  "questionPrompt": "先輩から「同僚の結婚祝いを選びたい」と相談されました。どのように提案しますか。",
+  "startedAt": "2026-05-20T04:03:50.070Z",
+  "endedAt": "2026-05-20T04:04:25.190Z",
+  "highRiskCount": 0,
+  "warnings": 1,
+  "snapshotCount": 1,
+  "nextStep": "Send artifacts to Azure AI scoring pipeline"
+}

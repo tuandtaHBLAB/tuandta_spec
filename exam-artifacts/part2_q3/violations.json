@@ -1,0 +1,23 @@
+[
+  {
+    "id": "80a20750-c8c5-45e6-9722-bc6c917d31e1",
+    "type": "LOOK_AWAY",
+    "severity": "WARNING",
+    "durationMs": 12158,
+    "timestamp": "2026-05-20T04:04:37.228Z"
+  },
+  {
+    "id": "68208008-9d78-4c8c-8acb-8d749f45fd43",
+    "type": "LOOK_AWAY",
+    "severity": "WARNING",
+    "durationMs": 8637,
+    "timestamp": "2026-05-20T04:04:33.707Z"
+  },
+  {
+    "id": "3b479352-538d-443b-a7cd-f47088cc9c61",
+    "type": "LOOK_AWAY",
+    "severity": "WARNING",
+    "durationMs": 5073,
+    "timestamp": "2026-05-20T04:04:30.143Z"
+  }
+]

@@ -1,0 +1,16 @@
+[
+  {
+    "id": "f60bcb24-2ed0-4fcc-a021-0b8e44d5f72b",
+    "type": "TAB_SWITCH",
+    "severity": "WARNING",
+    "durationMs": 0,
+    "timestamp": "2026-05-20T04:05:03.645Z"
+  },
+  {
+    "id": "7e0e14bc-37f6-4877-9364-a20c5eac1634",
+    "type": "BROWSER_BLUR",
+    "severity": "WARNING",
+    "durationMs": 0,
+    "timestamp": "2026-05-20T04:05:03.550Z"
+  }
+]

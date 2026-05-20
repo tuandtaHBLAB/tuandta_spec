@@ -1,0 +1,11 @@
+{
+  "partId": "part4",
+  "questionId": "q8",
+  "questionPrompt": "「大人がマンガを読むこと」について、あなたの考えを述べてください。",
+  "startedAt": "2026-05-19T10:30:59.031Z",
+  "endedAt": "2026-05-19T10:31:59.267Z",
+  "highRiskCount": 0,
+  "warnings": 2,
+  "snapshotCount": 2,
+  "nextStep": "Send artifacts to Azure AI scoring pipeline"
+}

@@ -1,0 +1,58 @@
+[
+  {
+    "id": "2c0b75fd-5ac0-4411-8fd6-d75071afef0b",
+    "type": "TAB_SWITCH",
+    "severity": "WARNING",
+    "durationMs": 0,
+    "timestamp": "2026-05-20T04:02:51.645Z"
+  },
+  {
+    "id": "696eefe1-a12b-44e7-8115-7b1b76677c0d",
+    "type": "BROWSER_BLUR",
+    "severity": "WARNING",
+    "durationMs": 0,
+    "timestamp": "2026-05-20T04:02:51.601Z"
+  },
+  {
+    "id": "c43ab811-a698-4d03-84ed-048e573c2ad7",
+    "type": "LOOK_AWAY",
+    "severity": "WARNING",
+    "durationMs": 5015,
+    "timestamp": "2026-05-20T04:02:40.953Z"
+  },
+  {
+    "id": "c0635281-d67c-47f7-83da-a2db8630a8a7",
+    "type": "LOOK_AWAY",
+    "severity": "WARNING",
+    "durationMs": 19412,
+    "timestamp": "2026-05-20T04:02:28.704Z"
+  },
+  {
+    "id": "2340f848-6852-4793-9ea2-ea91133d94c8",
+    "type": "LOOK_AWAY",
+    "severity": "WARNING",
+    "durationMs": 15900,
+    "timestamp": "2026-05-20T04:02:25.192Z"
+  },
+  {
+    "id": "92001f70-3d17-4036-af38-7e2567038dd7",
+    "type": "LOOK_AWAY",
+    "severity": "WARNING",
+    "durationMs": 12328,
+    "timestamp": "2026-05-20T04:02:21.620Z"
+  },
+  {
+    "id": "defece78-49c3-4c02-9225-7d2e39ce1e1e",
+    "type": "LOOK_AWAY",
+    "severity": "WARNING",
+    "durationMs": 8715,
+    "timestamp": "2026-05-20T04:02:18.007Z"
+  },
+  {
+    "id": "7c13965f-cbe0-4414-a755-70608d3cbbcc",
+    "type": "LOOK_AWAY",
+    "severity": "WARNING",
+    "durationMs": 5083,
+    "timestamp": "2026-05-20T04:02:14.376Z"
+  }
+]

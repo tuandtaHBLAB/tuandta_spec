@@ -1,0 +1,11 @@
+{
+  "partId": "part2",
+  "questionId": "q3",
+  "questionPrompt": "会議後に先輩から「よくできていたね」と言われました。どう返しますか。",
+  "startedAt": "2026-05-20T04:04:25.681Z",
+  "endedAt": "2026-05-20T04:05:00.991Z",
+  "highRiskCount": 0,
+  "warnings": 3,
+  "snapshotCount": 20,
+  "nextStep": "Send artifacts to Azure AI scoring pipeline"
+}

@@ -1,0 +1,11 @@
+{
+  "partId": "part3",
+  "questionId": "q6",
+  "questionPrompt": "チームで在宅勤務について議論しています。賛成または反対の立場で意見を述べてください。",
+  "startedAt": "2026-05-19T10:29:15.396Z",
+  "endedAt": "2026-05-19T10:29:55.808Z",
+  "highRiskCount": 0,
+  "warnings": 1,
+  "snapshotCount": 2,
+  "nextStep": "Send artifacts to Azure AI scoring pipeline"
+}
