@@ -1,11 +1,11 @@
 {
   "partId": "part1",
   "questionId": "q1",
-  "questionPrompt": "あなた自身と学習環境について、短く自己紹介してください。",
-  "startedAt": "2026-05-20T04:02:04.788Z",
-  "endedAt": "2026-05-20T04:03:04.824Z",
+  "questionPrompt": "すみません、原田さん、ちょっとお願いがあるんですが、よろしいでしょうか。あの、明日の午前9時から会議があるので、その準備を手伝ってもらいたいんです。実は人数が多い会議なので、椅子と机を倉庫から運ばなければならなくて…。それで、明日早めに出社して、一緒にやってもらえませんか。",
+  "startedAt": "2026-05-25T02:29:13.116Z",
+  "endedAt": "2026-05-25T02:30:13.124Z",
   "highRiskCount": 0,
-  "warnings": 8,
-  "snapshotCount": 20,
+  "warnings": 0,
+  "snapshotCount": 0,
   "nextStep": "Send artifacts to Azure AI scoring pipeline"
 }

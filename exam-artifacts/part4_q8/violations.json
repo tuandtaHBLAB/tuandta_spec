@@ -1,16 +1,65 @@
 [
   {
-    "id": "d29e44cb-1247-47b1-8c03-57c115422a6a",
-    "type": "BROWSER_BLUR",
+    "id": "1e02f5ff-9c05-4d75-acc4-f03ea1e1b6cf",
+    "type": "TAB_SWITCH",
     "severity": "WARNING",
     "durationMs": 0,
-    "timestamp": "2026-05-19T10:31:45.156Z"
+    "timestamp": "2026-05-25T04:29:28.734Z"
   },
   {
-    "id": "0ba85190-3a35-4646-a9f3-0316624fc5e3",
+    "id": "e40cde5e-fd31-47ea-888d-818eba1a68a4",
+    "type": "TAB_SWITCH",
+    "severity": "WARNING",
+    "durationMs": 0,
+    "timestamp": "2026-05-25T04:28:56.272Z"
+  },
+  {
+    "id": "c110649b-1bc7-4b84-836a-8d1a01e7be91",
     "type": "BROWSER_BLUR",
     "severity": "WARNING",
     "durationMs": 0,
-    "timestamp": "2026-05-19T10:31:34.973Z"
+    "timestamp": "2026-05-25T04:28:36.326Z"
+  },
+  {
+    "id": "14135e53-0b53-46e6-82c8-a64569f5ed3b",
+    "type": "FACE_MISSING",
+    "severity": "WARNING",
+    "durationMs": 6507,
+    "timestamp": "2026-05-25T04:28:13.697Z"
+  },
+  {
+    "id": "c475d27b-1bc5-40ca-8ede-a24708e3ec5a",
+    "type": "FACE_MISSING",
+    "severity": "WARNING",
+    "durationMs": 3005,
+    "timestamp": "2026-05-25T04:28:10.195Z"
+  },
+  {
+    "id": "9033f834-bf06-4bb2-8cf2-f0633a62ab24",
+    "type": "TAB_SWITCH",
+    "severity": "WARNING",
+    "durationMs": 0,
+    "timestamp": "2026-05-25T04:27:53.352Z"
+  },
+  {
+    "id": "e8996768-9f7c-42de-ab31-7a06cfd89841",
+    "type": "BROWSER_BLUR",
+    "severity": "WARNING",
+    "durationMs": 0,
+    "timestamp": "2026-05-25T04:27:53.270Z"
+  },
+  {
+    "id": "87632e58-78ba-4917-b092-ce64a80de560",
+    "type": "TAB_SWITCH",
+    "severity": "WARNING",
+    "durationMs": 0,
+    "timestamp": "2026-05-25T04:27:41.593Z"
+  },
+  {
+    "id": "d9500486-9ddb-4157-9d18-d234d927fd29",
+    "type": "BROWSER_BLUR",
+    "severity": "WARNING",
+    "durationMs": 0,
+    "timestamp": "2026-05-25T04:27:41.543Z"
   }
 ]

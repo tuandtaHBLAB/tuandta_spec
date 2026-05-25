@@ -2,50 +2,177 @@
   "parts": [
     {
       "id": "part1",
-      "title": "Part 1 - 発音",
-      "description": "短い文章を読み、発音とアクセントを確認します。",
+      "title": "Part 1",
+      "description": "Part 1 は読むテストです。",
+      "introCategoryTokens": [
+        { "text": "発音", "reading": "はつおん" }
+      ],
+      "introHeadlineTokens": [
+        { "text": "Part 1 は読むテストです。" }
+      ],
+      "introNoteLines": [
+        [
+          { "text": "発音", "reading": "はつおん" },
+          { "text": "とアクセントに" },
+          { "text": "注意", "reading": "ちゅうい" },
+          { "text": "して" },
+          { "text": "読", "reading": "よ" },
+          { "text": "みます。" }
+        ],
+        [
+          { "text": "次", "reading": "つぎ" },
+          { "text": "のページを" },
+          { "text": "見", "reading": "み" },
+          { "text": "てください。" }
+        ]
+      ],
       "introAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
       "startWithinSeconds": 60,
       "questions": [
         {
           "id": "q1",
-          "prompt": "あなた自身と学習環境について、短く自己紹介してください。",
+          "prompt": "すみません、原田さん、ちょっとお願いがあるんですが、よろしいでしょうか。あの、明日の午前9時から会議があるので、その準備を手伝ってもらいたいんです。実は人数が多い会議なので、椅子と机を倉庫から運ばなければならなくて…。それで、明日早めに出社して、一緒にやってもらえませんか。",
+          "promptLines": [
+            [
+              { "text": "すみません、" },
+              { "text": "原田", "reading": "はらだ" },
+              { "text": "さん、ちょっとお" },
+              { "text": "願", "reading": "ねが" },
+              { "text": "いがあるんですが、よろしいでしょうか。" }
+            ],
+            [
+              { "text": "あの、" },
+              { "text": "明日", "reading": "あした" },
+              { "text": "の" },
+              { "text": "午前", "reading": "ごぜん" },
+              { "text": "9" },
+              { "text": "時", "reading": "じ" },
+              { "text": "から" },
+              { "text": "会議", "reading": "かいぎ" },
+              { "text": "があるので、その" },
+              { "text": "準備", "reading": "じゅんび" },
+              { "text": "を" },
+              { "text": "手伝", "reading": "てつだ" },
+              { "text": "ってもらいたいんです。" }
+            ],
+            [
+              { "text": "実", "reading": "じつ" },
+              { "text": "は" },
+              { "text": "人数", "reading": "にんずう" },
+              { "text": "が" },
+              { "text": "多", "reading": "おお" },
+              { "text": "い" },
+              { "text": "会議", "reading": "かいぎ" },
+              { "text": "なので、" },
+              { "text": "椅子", "reading": "いす" },
+              { "text": "と" },
+              { "text": "机", "reading": "つくえ" },
+              { "text": "を" },
+              { "text": "倉庫", "reading": "そうこ" },
+              { "text": "から" },
+              { "text": "運", "reading": "はこ" },
+              { "text": "ばなければならなくて…" }
+            ],
+            [
+              { "text": "それで、" },
+              { "text": "明日", "reading": "あした" },
+              { "text": "早", "reading": "はや" },
+              { "text": "めに" },
+              { "text": "出社", "reading": "しゅっしゃ" },
+              { "text": "して、" },
+              { "text": "一緒", "reading": "いっしょ" },
+              { "text": "にやってもらえませんか。" }
+            ]
+          ],
           "questionAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
           "prepSeconds": 15,
           "answerSeconds": 45,
-          "tips": "はっきりした発音で、自然なスピードを意識しましょう。"
+          "tips": "発音とアクセントを意識しながら、自然な速さで読んでください。"
         }
       ]
     },
     {
       "id": "part2",
-      "title": "Part 2 - 応答",
-      "description": "場面を見て、適切な返答を行います。",
+      "title": "Part 2",
+      "description": "Part 2 は応答です。",
+      "introCategoryTokens": [
+        { "text": "応答", "reading": "おうとう" }
+      ],
+      "introHeadlineTokens": [
+        { "text": "Part 2 は" },
+        { "text": "応答", "reading": "おうとう" },
+        { "text": "です。" }
+      ],
+      "introNoteLines": [
+        [
+          { "text": "イラストを" },
+          { "text": "見", "reading": "み" },
+          { "text": "てください。" }
+        ],
+        [
+          { "text": "相手", "reading": "あいて" },
+          { "text": "が" },
+          { "text": "言", "reading": "い" },
+          { "text": "ったことに" },
+          { "text": "対", "reading": "たい" },
+          { "text": "してあなたなら" }
+        ],
+        [
+          { "text": "何", "reading": "なん" },
+          { "text": "と" },
+          { "text": "答", "reading": "こた" },
+          { "text": "えますか。" }
+        ],
+        [
+          { "text": "話", "reading": "はな" },
+          { "text": "す" },
+          { "text": "時間", "reading": "じかん" },
+          { "text": "は30" },
+          { "text": "秒", "reading": "びょう" },
+          { "text": "です。" }
+        ],
+        [
+          { "text": "問題", "reading": "もんだい" },
+          { "text": "は3" },
+          { "text": "問", "reading": "もん" },
+          { "text": "あります。" }
+        ],
+        [
+          { "text": "では" },
+          { "text": "始", "reading": "はじ" },
+          { "text": "めます。" }
+        ]
+      ],
       "introAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
       "startWithinSeconds": 60,
       "questions": [
         {
           "id": "q2",
           "prompt": "先輩から「同僚の結婚祝いを選びたい」と相談されました。どのように提案しますか。",
-          "imageUrl": "https://placehold.co/960x540/e2e8f0/0f172a?text=Part+2+-+Wedding+Gift+Situation",
+          "imageUrl": "/part2_1.png",
+          "imageAlt": "Part 2 question 1 image",
           "questionAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3",
-          "prepSeconds": 5,
+          "prepSeconds": 15,
           "answerSeconds": 30,
           "tips": "理由、予算、渡し方まで具体的に話しましょう。"
         },
         {
           "id": "q3",
           "prompt": "会議後に先輩から「よくできていたね」と言われました。どう返しますか。",
+          "imageUrl": "/part2_2.png",
+          "imageAlt": "Part 2 question 2 image",
           "questionAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3",
-          "prepSeconds": 5,
+          "prepSeconds": 15,
           "answerSeconds": 30,
           "tips": "感謝と謙虚さが伝わる表現を使いましょう。"
         },
         {
           "id": "q4",
           "prompt": "取引先から今夜の食事に誘われましたが予定があります。丁寧に断るにはどうしますか。",
+          "imageUrl": "/part2_3.png",
+          "imageAlt": "Part 2 question 3 image",
           "questionAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3",
-          "prepSeconds": 5,
+          "prepSeconds": 15,
           "answerSeconds": 30,
           "tips": "相手への配慮と代替案を入れると自然です。"
         }
@@ -53,52 +180,195 @@
     },
     {
       "id": "part3",
-      "title": "Part 3 - 会話",
-      "description": "複数人の会話に参加する想定で話します。",
+      "title": "Part 3",
+      "description": "Part 3 は会話です。",
+      "introCategoryTokens": [
+        { "text": "会話", "reading": "かいわ" }
+      ],
+      "introHeadlineTokens": [
+        { "text": "Part 3 は" },
+        { "text": "会話", "reading": "かいわ" },
+        { "text": "です。" }
+      ],
+      "introNoteLines": [
+        [
+          { "text": "2" },
+          { "text": "人", "reading": "り" },
+          { "text": "が" },
+          { "text": "話", "reading": "はな" },
+          { "text": "している" },
+          { "text": "会話", "reading": "かいわ" },
+          { "text": "を" },
+          { "text": "聞", "reading": "き" },
+          { "text": "いて、" }
+        ],
+        [
+          { "text": "会話", "reading": "かいわ" },
+          { "text": "に" },
+          { "text": "入", "reading": "はい" },
+          { "text": "ってください。" }
+        ],
+        [
+          { "text": "話", "reading": "はな" },
+          { "text": "す" },
+          { "text": "時間", "reading": "じかん" },
+          { "text": "は40" },
+          { "text": "秒", "reading": "びょう" },
+          { "text": "です。" }
+        ],
+        [
+          { "text": "問題", "reading": "もんだい" },
+          { "text": "は2" },
+          { "text": "問", "reading": "もん" },
+          { "text": "あります。" }
+        ],
+        [
+          { "text": "では" },
+          { "text": "始", "reading": "はじ" },
+          { "text": "めます。" }
+        ]
+      ],
       "introAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
       "startWithinSeconds": 60,
       "questions": [
         {
           "id": "q5",
-          "prompt": "Sakura Cafeのクーポンを持っています。友人を誘う会話を始めてみましょう。",
-          "imageUrl": "https://placehold.co/960x540/fef3c7/7c2d12?text=Part+3+-+Cafe+Conversation",
+          "prompt": "職場で先輩2人が話しています。会話を聞いて、あなたも会話に入ってください。",
+          "imageUrl": "/part3_1.png",
+          "imageAlt": "Part 3 question 1 image",
           "questionAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3",
           "prepSeconds": 10,
           "answerSeconds": 40,
-          "tips": "場所、時間、誘う理由を簡潔にまとめましょう。"
+          "tips": "先輩Aと先輩Bの会話に自然に入るつもりで話しましょう。"
         },
         {
           "id": "q6",
-          "prompt": "チームで在宅勤務について議論しています。賛成または反対の立場で意見を述べてください。",
+          "prompt": "友達2人が食事をしながら話しています。会話を聞いて、あなたも会話に入ってください。",
+          "imageUrl": "/part3_2.png",
+          "imageAlt": "Part 3 question 2 image",
           "questionAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3",
           "prepSeconds": 10,
           "answerSeconds": 40,
-          "tips": "生産性、コミュニケーション、健康面の観点を入れましょう。"
+          "tips": "友達Aと友達Bに返事をするつもりで、短く自然に話しましょう。"
         }
       ]
     },
     {
       "id": "part4",
-      "title": "Part 4 - スピーチ",
-      "description": "提示されたテーマで短いスピーチを行います。",
+      "title": "Part 4",
+      "description": "Part 4 は発表です。",
+      "introCategoryTokens": [
+        { "text": "発表", "reading": "はっぴょう" }
+      ],
+      "introHeadlineTokens": [
+        { "text": "Part 4 は" },
+        { "text": "発表", "reading": "はっぴょう" },
+        { "text": "です。" }
+      ],
+      "introNoteLines": [
+        [
+          { "text": "質問", "reading": "しつもん" },
+          { "text": "に" },
+          { "text": "答", "reading": "こた" },
+          { "text": "えてください。" }
+        ],
+        [
+          { "text": "考", "reading": "かんが" },
+          { "text": "える" },
+          { "text": "時間", "reading": "じかん" },
+          { "text": "が60" },
+          { "text": "秒", "reading": "びょう" },
+          { "text": "あります。" }
+        ],
+        [
+          { "text": "答", "reading": "こた" },
+          { "text": "える" },
+          { "text": "時間", "reading": "じかん" },
+          { "text": "も60" },
+          { "text": "秒", "reading": "びょう" },
+          { "text": "です。" }
+        ],
+        [
+          { "text": "問題", "reading": "もんだい" },
+          { "text": "は2" },
+          { "text": "問", "reading": "もん" },
+          { "text": "あります。" }
+        ],
+        [
+          { "text": "では" },
+          { "text": "始", "reading": "はじ" },
+          { "text": "めます。" }
+        ]
+      ],
       "introAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
       "startWithinSeconds": 60,
       "questions": [
         {
           "id": "q7",
-          "prompt": "あなたが住んでいる街の魅力と、好きな理由を話してください。",
+          "prompt": "どうして日本語の勉強を始めたのか。",
+          "imageUrl": "/part4_1_image.png",
+          "questionLabelTokens": [{ "text": "テーマ" }],
+          "promptLines": [
+            [
+              { "text": "どうして" },
+              { "text": "日本語", "reading": "にほんご" },
+              { "text": "の" },
+              { "text": "勉強", "reading": "べんきょう" },
+              { "text": "を" }
+            ],
+            [
+              { "text": "始", "reading": "はじ" },
+              { "text": "めたのか。" }
+            ]
+          ],
+          "imageAlt": "Part 4 question 1 theme: why did you start studying Japanese?",
           "questionAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-14.mp3",
           "prepSeconds": 60,
           "answerSeconds": 60,
-          "tips": "生活環境、文化、便利さ、個人的な体験を織り込みましょう。"
+          "tips": "日本語の勉強を始めた理由を具体的に話しましょう。"
         },
         {
           "id": "q8",
-          "prompt": "「大人がマンガを読むこと」について、あなたの考えを述べてください。",
+          "prompt": "日本では、今、若者の6人に1人が転職したいと思っています。あなたは転職についてどう思いますか。メリットとデメリットをあげて説明してください。",
+          "imageUrl": "/part4_2_image.png",
+          "questionLabelTokens": [{ "text": "質問", "reading": "しつもん" }],
+          "promptLines": [
+            [
+              { "text": "日本", "reading": "にほん" },
+              { "text": "では、" },
+              { "text": "今", "reading": "いま" },
+              { "text": "、" },
+              { "text": "若者", "reading": "わかもの" },
+              { "text": "の6" },
+              { "text": "人", "reading": "にん" },
+              { "text": "に1" },
+              { "text": "人", "reading": "ひとり" },
+              { "text": "が" }
+            ],
+            [
+              { "text": "転職", "reading": "てんしょく" },
+              { "text": "したいと" },
+              { "text": "思", "reading": "おも" },
+              { "text": "っています。" }
+            ],
+            [
+              { "text": "あなたは" },
+              { "text": "転職", "reading": "てんしょく" },
+              { "text": "についてどう" },
+              { "text": "思", "reading": "おも" },
+              { "text": "いますか。" }
+            ],
+            [
+              { "text": "メリットとデメリットをあげて" },
+              { "text": "説明", "reading": "せつめい" },
+              { "text": "してください。" }
+            ]
+          ],
+          "imageAlt": "Part 4 question 2 theme: thoughts about changing jobs, with merits and demerits",
           "questionAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3",
           "prepSeconds": 60,
           "answerSeconds": 60,
-          "tips": "学習、娯楽、社会的イメージの観点から論じましょう。"
+          "tips": "転職のメリットとデメリットをあげて、自分の考えを説明しましょう。"
         }
       ]
     }

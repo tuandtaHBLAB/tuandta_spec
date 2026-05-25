@@ -1,11 +1,11 @@
 {
   "partId": "part4",
   "questionId": "q7",
-  "questionPrompt": "あなたが住んでいる街の魅力と、好きな理由を話してください。",
-  "startedAt": "2026-05-19T10:29:58.617Z",
-  "endedAt": "2026-05-19T10:30:59.000Z",
+  "questionPrompt": "どうして日本語の勉強を始めたのか。",
+  "startedAt": "2026-05-25T04:25:37.677Z",
+  "endedAt": "2026-05-25T04:27:37.719Z",
   "highRiskCount": 0,
-  "warnings": 0,
-  "snapshotCount": 0,
+  "warnings": 15,
+  "snapshotCount": 20,
   "nextStep": "Send artifacts to Azure AI scoring pipeline"
 }

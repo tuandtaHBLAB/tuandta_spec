@@ -1,11 +1,11 @@
 {
   "partId": "part3",
   "questionId": "q6",
-  "questionPrompt": "チームで在宅勤務について議論しています。賛成または反対の立場で意見を述べてください。",
-  "startedAt": "2026-05-19T10:29:15.396Z",
-  "endedAt": "2026-05-19T10:29:55.808Z",
+  "questionPrompt": "友達2人が食事をしながら話しています。会話を聞いて、あなたも会話に入ってください。",
+  "startedAt": "2026-05-25T04:23:54.035Z",
+  "endedAt": "2026-05-25T04:24:44.178Z",
   "highRiskCount": 0,
-  "warnings": 1,
-  "snapshotCount": 2,
+  "warnings": 0,
+  "snapshotCount": 0,
   "nextStep": "Send artifacts to Azure AI scoring pipeline"
 }

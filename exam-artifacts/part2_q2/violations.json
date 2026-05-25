@@ -1,9 +1,30 @@
 [
   {
-    "id": "bc852035-3425-4c66-9121-f6f8a92fe94d",
+    "id": "927047af-30b6-4fcf-8425-b37a3f3fe32d",
+    "type": "LOOK_AWAY",
+    "severity": "WARNING",
+    "durationMs": 5231,
+    "timestamp": "2026-05-25T02:31:28.107Z"
+  },
+  {
+    "id": "1d185d5e-be48-4e33-997d-64e661830c36",
+    "type": "TAB_SWITCH",
+    "severity": "WARNING",
+    "durationMs": 0,
+    "timestamp": "2026-05-25T02:31:09.296Z"
+  },
+  {
+    "id": "d0224e1c-0abd-4b75-8de2-2f6520e494a7",
     "type": "BROWSER_BLUR",
     "severity": "WARNING",
     "durationMs": 0,
-    "timestamp": "2026-05-20T04:04:02.040Z"
+    "timestamp": "2026-05-25T02:31:09.178Z"
+  },
+  {
+    "id": "c9b9230b-df8d-47be-9389-4a5ad174f800",
+    "type": "MULTIPLE_FACES",
+    "severity": "HIGH_RISK",
+    "durationMs": 0,
+    "timestamp": "2026-05-25T02:30:54.012Z"
   }
 ]

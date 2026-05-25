@@ -1,16 +1,1 @@
-[
-  {
-    "id": "17c192b2-638d-460a-aff5-3c40030b7236",
-    "type": "BROWSER_BLUR",
-    "severity": "WARNING",
-    "durationMs": 0,
-    "timestamp": "2026-05-19T10:29:11.525Z"
-  },
-  {
-    "id": "d48e942b-ef86-4f35-a1f3-60b7fcdcae36",
-    "type": "BROWSER_BLUR",
-    "severity": "WARNING",
-    "durationMs": 0,
-    "timestamp": "2026-05-19T10:28:42.168Z"
-  }
-]
+[]

@@ -33,7 +33,11 @@ type SnapshotLog = {
 type Question = {
   id: string;
   prompt: string;
+  promptLines?: FuriganaToken[][];
   imageUrl?: string;
+  imageAlt?: string;
+  imageLabelTokens?: FuriganaToken[];
+  questionLabelTokens?: FuriganaToken[];
   questionAudioUrl?: string;
   prepSeconds: number;
   answerSeconds: number;
@@ -44,6 +48,9 @@ type Part = {
   id: string;
   title: string;
   description: string;
+  introCategoryTokens?: FuriganaToken[];
+  introHeadlineTokens?: FuriganaToken[];
+  introNoteLines?: FuriganaToken[][];
   introAudioUrl?: string;
   startWithinSeconds: number;
   questions: Question[];
@@ -53,7 +60,23 @@ type QuestionData = {
   parts: Part[];
 };
 
-type ExamStage = "home" | "part_intro" | "prep" | "answer" | "completed" | "disqualified";
+type ExamStage =
+  | "home"
+  | "mic_test"
+  | "exam_notice"
+  | "part_intro"
+  | "part_instruction"
+  | "prep"
+  | "answer"
+  | "saving"
+  | "timeout"
+  | "completed"
+  | "disqualified";
+
+type FuriganaToken = {
+  text: string;
+  reading?: string;
+};
 
 const safePlay = async (media: HTMLMediaElement | null) => {
   if (!media) return;
@@ -74,6 +97,9 @@ const CHECKPOINTS = [
 const LOOK_AWAY_DEG = 25;
 const HEAD_DOWN_DEG = 20;
 const MAX_HIGH_RISK = 3;
+const MIC_TEST_QUESTION_HOLD_SECONDS = 10;
+const EXAM_NOTICE_SECONDS = 15;
+const PART_INSTRUCTION_SECONDS = 10;
 const VIOLATION_LABELS: Record<ViolationType, string> = {
   FACE_MISSING: "顔の未検出",
   MULTIPLE_FACES: "複数人の映り込み",
@@ -82,6 +108,76 @@ const VIOLATION_LABELS: Record<ViolationType, string> = {
   TAB_SWITCH: "タブ切り替え",
   BROWSER_BLUR: "ブラウザ離脱",
 };
+
+const MIC_TEST_QUESTIONS: { id: number; tokens: FuriganaToken[] }[] = [
+  {
+    id: 1,
+    tokens: [
+      { text: "名前", reading: "なまえ" },
+      { text: "を" },
+      { text: "言", reading: "い" },
+      { text: "ってください。" },
+    ],
+  },
+  {
+    id: 2,
+    tokens: [
+      { text: "今日", reading: "きょう" },
+      { text: "は、" },
+      { text: "何月何日", reading: "なんがつなんにち" },
+      { text: "ですか。" },
+    ],
+  },
+  {
+    id: 3,
+    tokens: [
+      { text: "今", reading: "いま" },
+      { text: "、" },
+      { text: "何時", reading: "なんじ" },
+      { text: "ですか。" },
+    ],
+  },
+  {
+    id: 4,
+    tokens: [
+      { text: "今", reading: "いま" },
+      { text: "、どこに" },
+      { text: "住", reading: "す" },
+      { text: "んでいますか。" },
+    ],
+  },
+];
+
+const MIC_TEST_SECONDS = (MIC_TEST_QUESTIONS.length + 1) * MIC_TEST_QUESTION_HOLD_SECONDS;
+
+const EXAM_NOTICE_ITEMS: FuriganaToken[][] = [
+  [
+    { text: "試験時間", reading: "しけんじかん" },
+    { text: "は" },
+    { text: "約", reading: "やく" },
+    { text: "15" },
+    { text: "分", reading: "ふん" },
+    { text: "です。" },
+  ],
+  [
+    { text: "問題", reading: "もんだい" },
+    { text: "は" },
+    { text: "全部", reading: "ぜんぶ" },
+    { text: "で8" },
+    { text: "問", reading: "もん" },
+    { text: "です。" },
+  ],
+  [
+    { text: "試験", reading: "しけん" },
+    { text: "を" },
+    { text: "始", reading: "はじ" },
+    { text: "めたら、" },
+    { text: "戻", reading: "もど" },
+    { text: "ること、" },
+    { text: "途中", reading: "とちゅう" },
+    { text: "でやめることはできません。" },
+  ],
+];
 
 function BanOverlay() {
   return (
@@ -130,6 +226,29 @@ function NoMaskIcon() {
   );
 }
 
+function JapaneseText({
+  tokens,
+  className,
+}: {
+  tokens: FuriganaToken[];
+  className?: string;
+}) {
+  return (
+    <p className={className}>
+      {tokens.map((token, index) =>
+        token.reading ? (
+          <ruby key={`${token.text}-${index}`}>
+            {token.text}
+            <rt>{token.reading}</rt>
+          </ruby>
+        ) : (
+          <span key={`${token.text}-${index}`}>{token.text}</span>
+        ),
+      )}
+    </p>
+  );
+}
+
 export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const mobileVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -149,6 +268,7 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
   const lastAudioMeterUpdateRef = useRef(0);
   const lastAudioLevelRef = useRef(0);
   const attemptedHomeAutoOpenRef = useRef(false);
+  const micTestQuestionTimeoutsRef = useRef<number[]>([]);
 
   const [questionData, setQuestionData] = useState<QuestionData | null>(null);
   const [loadError, setLoadError] = useState("");
@@ -173,6 +293,8 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
   const [persistStatus, setPersistStatus] = useState("");
   const [partTimeoutMessage, setPartTimeoutMessage] = useState("");
   const [audioLevel, setAudioLevel] = useState(0);
+  const [visibleMicTestQuestionCount, setVisibleMicTestQuestionCount] = useState(0);
+  const [micTestStartedAt, setMicTestStartedAt] = useState<number | null>(null);
 
   const cooldownMapRef = useRef<Record<ViolationType, number>>({
     FACE_MISSING: 0,
@@ -264,13 +386,59 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
       }
     },
   });
+  const {
+    remainingMs: micTestRemainingMs,
+    pause: pauseMicTestCountdown,
+    start: startMicTestCountdown,
+  } = useCountdown({
+    tickMs: 100,
+    onExpire: () => {
+      if (stageRef.current === "mic_test") {
+        setStage("exam_notice");
+      }
+    },
+  });
+  const {
+    remainingSeconds: examNoticeRemainingSeconds,
+    pause: pauseExamNoticeCountdown,
+    start: startExamNoticeCountdown,
+  } = useCountdown({
+    tickMs: 100,
+    onExpire: () => {
+      if (stageRef.current === "exam_notice") {
+        setStage("part_intro");
+      }
+    },
+  });
+  const {
+    pause: pausePartInstructionCountdown,
+    start: startPartInstructionCountdown,
+  } = useCountdown({
+    tickMs: 100,
+    onExpire: () => {
+      const nextQuestion = currentQuestionRef.current;
+      if (stageRef.current !== "part_instruction" || !nextQuestion) return;
+
+      setQuestionStartAt(new Date().toISOString());
+      phaseExpiredRef.current = false;
+      if (nextQuestion.prepSeconds <= 0) {
+        setStage("answer");
+        startPhaseCountdown(nextQuestion.answerSeconds);
+        startAnswerRecording();
+        return;
+      }
+
+      setStage("prep");
+      startPhaseCountdown(nextQuestion.prepSeconds);
+    },
+  });
   const { remainingSeconds: partIntroRemainingSeconds, pause: pausePartIntroCountdown, start: startPartIntroCountdown } =
     useCountdown({
       tickMs: 100,
       onExpire: () => {
         if (partIntroExpiredRef.current) return;
         partIntroExpiredRef.current = true;
-        backToHome("Part start confirmation timed out, returning to home.");
+        setStage("timeout");
       },
     });
 
@@ -305,6 +473,11 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
     lastAudioLevelRef.current = 0;
     setAudioLevel(0);
     setIsCameraReady(false);
+  }, []);
+
+  const clearMicTestQuestionTimeouts = useCallback(() => {
+    micTestQuestionTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
+    micTestQuestionTimeoutsRef.current = [];
   }, []);
 
   const startAnswerRecording = useCallback(() => {
@@ -388,17 +561,28 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
       if (severity === "HIGH_RISK") {
         setHighRiskCount((prev) => {
           const next = prev + 1;
-          setHighRiskPopup(`重大警告: ${VIOLATION_LABELS[type]}（${next}/${MAX_HIGH_RISK}）`);
+          setHighRiskPopup(`é‡大警告: ${VIOLATION_LABELS[type]}（${next}/${MAX_HIGH_RISK}）`);
           if (next >= MAX_HIGH_RISK) {
             setStage("disqualified");
             pausePhaseCountdown();
+            pauseMicTestCountdown();
+            pauseExamNoticeCountdown();
+            pausePartInstructionCountdown();
             pausePartIntroCountdown();
+            clearMicTestQuestionTimeouts();
           }
           return next;
         });
       }
     },
-    [pausePartIntroCountdown, pausePhaseCountdown],
+    [
+      pauseExamNoticeCountdown,
+      clearMicTestQuestionTimeouts,
+      pauseMicTestCountdown,
+      pausePartInstructionCountdown,
+      pausePartIntroCountdown,
+      pausePhaseCountdown,
+    ],
   );
 
   const initDetector = useCallback(async () => {
@@ -629,7 +813,13 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
   const detectLoop = useCallback(() => {
     const detector = faceLandmarkerRef.current;
     const video = videoRef.current;
-    const isExamRunning = stage === "prep" || stage === "answer" || stage === "part_intro";
+    const isExamRunning =
+      stage === "mic_test" ||
+      stage === "exam_notice" ||
+      stage === "part_instruction" ||
+      stage === "prep" ||
+      stage === "answer" ||
+      stage === "part_intro";
 
     if (!detector || !video || !isExamRunning) return;
 
@@ -724,7 +914,13 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
 
   useEffect(() => {
     if (!isCameraReady) return;
-    const isExamRunning = stage === "prep" || stage === "answer" || stage === "part_intro";
+    const isExamRunning =
+      stage === "mic_test" ||
+      stage === "exam_notice" ||
+      stage === "part_instruction" ||
+      stage === "prep" ||
+      stage === "answer" ||
+      stage === "part_intro";
     if (!isExamRunning) return;
     animationFrameRef.current = window.requestAnimationFrame(detectLoop);
     return () => {
@@ -746,7 +942,11 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
 
   const backToHome = useCallback((message?: string) => {
     pausePhaseCountdown();
+    pauseMicTestCountdown();
+    pauseExamNoticeCountdown();
+    pausePartInstructionCountdown();
     pausePartIntroCountdown();
+    clearMicTestQuestionTimeouts();
     phaseExpiredRef.current = false;
     partIntroExpiredRef.current = false;
     if (partAudioRef.current) {
@@ -762,10 +962,20 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
     setPartIndex(0);
     setQuestionIndex(0);
     setQuestionStartAt(null);
+    setMicTestStartedAt(null);
+    setVisibleMicTestQuestionCount(0);
     setHighRiskCount(0);
     setPersistStatus("");
     if (message) setPartTimeoutMessage(message);
-  }, [pausePartIntroCountdown, pausePhaseCountdown, stopAnswerRecording]);
+  }, [
+    pauseExamNoticeCountdown,
+    clearMicTestQuestionTimeouts,
+    pauseMicTestCountdown,
+    pausePartInstructionCountdown,
+    pausePartIntroCountdown,
+    pausePhaseCountdown,
+    stopAnswerRecording,
+  ]);
 
   const saveQuestionArtifacts = useCallback(
     async (endedAt: string, audioBlob: Blob | null) => {
@@ -818,6 +1028,12 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
     if (!questionData || !currentPart || !currentQuestion) return;
 
     pausePhaseCountdown();
+    const isLastQuestionInPart = questionIndex >= currentPart.questions.length - 1;
+    const isLastPart = partIndex >= questionData.parts.length - 1;
+
+    if (isLastQuestionInPart && isLastPart) {
+      setStage("saving");
+    }
 
     try {
       const endedAt = new Date().toISOString();
@@ -826,9 +1042,6 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
     } catch {
       setPersistStatus("保存時にエラーが発生しましたが、試験は完了として処理しました。");
     }
-
-    const isLastQuestionInPart = questionIndex >= currentPart.questions.length - 1;
-    const isLastPart = partIndex >= questionData.parts.length - 1;
 
     if (isLastQuestionInPart && isLastPart) {
       setStage("completed");
@@ -847,10 +1060,17 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
     const nextQuestionIndex = questionIndex + 1;
     const nextQuestion = currentPart.questions[nextQuestionIndex];
     setQuestionIndex(nextQuestionIndex);
-    setStage("prep");
     phaseExpiredRef.current = false;
-    startPhaseCountdown(nextQuestion.prepSeconds);
     setQuestionStartAt(new Date().toISOString());
+    if (nextQuestion.prepSeconds <= 0) {
+      setStage("answer");
+      startPhaseCountdown(nextQuestion.answerSeconds);
+      startAnswerRecording();
+      return;
+    }
+
+    setStage("prep");
+    startPhaseCountdown(nextQuestion.prepSeconds);
   }, [
     currentPart,
     currentQuestion,
@@ -859,6 +1079,7 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
     questionData,
     questionIndex,
     saveQuestionArtifacts,
+    startAnswerRecording,
     startPhaseCountdown,
     stopAnswerRecording,
   ]);
@@ -876,6 +1097,15 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
   }, [pausePhaseCountdown, stage]);
 
   useEffect(() => {
+    if (stage !== "part_instruction") {
+      pausePartInstructionCountdown();
+      return;
+    }
+    startPartInstructionCountdown(PART_INSTRUCTION_SECONDS);
+    return () => pausePartInstructionCountdown();
+  }, [pausePartInstructionCountdown, stage, startPartInstructionCountdown]);
+
+  useEffect(() => {
     if (!highRiskPopup) return;
     const timeout = window.setTimeout(() => setHighRiskPopup(null), 5000);
     return () => window.clearTimeout(timeout);
@@ -888,6 +1118,51 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
     }, 4000);
     return () => window.clearTimeout(timeout);
   }, [backToHome, stage]);
+
+  useEffect(() => {
+    if (stage !== "timeout") return;
+    const timeout = window.setTimeout(() => {
+      backToHome();
+    }, 4000);
+    return () => window.clearTimeout(timeout);
+  }, [backToHome, stage]);
+
+  useEffect(() => {
+    if (stage !== "mic_test") {
+      pauseMicTestCountdown();
+      clearMicTestQuestionTimeouts();
+      return;
+    }
+
+    startMicTestCountdown(MIC_TEST_SECONDS);
+
+    clearMicTestQuestionTimeouts();
+    micTestQuestionTimeoutsRef.current = MIC_TEST_QUESTIONS.map((_, index) =>
+      window.setTimeout(
+        () => setVisibleMicTestQuestionCount(index + 1),
+        (index + 1) * MIC_TEST_QUESTION_HOLD_SECONDS * 1000,
+      ),
+    );
+
+    return () => {
+      clearMicTestQuestionTimeouts();
+      pauseMicTestCountdown();
+    };
+  }, [
+    clearMicTestQuestionTimeouts,
+    pauseMicTestCountdown,
+    stage,
+    startMicTestCountdown,
+  ]);
+
+  useEffect(() => {
+    if (stage !== "exam_notice") {
+      pauseExamNoticeCountdown();
+      return;
+    }
+    startExamNoticeCountdown(EXAM_NOTICE_SECONDS);
+    return () => pauseExamNoticeCountdown();
+  }, [pauseExamNoticeCountdown, stage, startExamNoticeCountdown]);
 
   useEffect(() => {
     if (stage !== "part_intro") {
@@ -919,11 +1194,19 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
     [questionData],
   );
 
-  const currentPartQuestionCount = currentPart?.questions.length ?? 0;
   const questionNumberInPart = questionIndex + 1;
+  const isVisualQuestion = !!currentQuestion?.imageUrl;
+  const isPart3VisualQuestion = currentPart?.id === "part3" && isVisualQuestion;
+  const isPart4VisualQuestion = currentPart?.id === "part4" && isVisualQuestion;
   const timerLabel = stage === "part_intro" ? "開始まで" : stage === "prep" ? "準備" : "回答";
   const timerValue = stage === "part_intro" ? partIntroRemainingSeconds : phaseRemainingSeconds;
   const timerVariant = stage === "prep" ? "prep" : stage === "answer" ? "answer" : "default";
+  const visibleMicTestQuestions =
+    stage === "mic_test" && micTestStartedAt !== null
+      ? Date.now() - micTestStartedAt < MIC_TEST_QUESTION_HOLD_SECONDS * 1000
+        ? 0
+        : visibleMicTestQuestionCount
+      : 0;
   const isReadyToStart = isCameraChecked && isMicChecked && !!questionData;
   const startExamHint = isCheckingDevices
     ? "Camera and mic are opening. The start button will unlock automatically."
@@ -938,9 +1221,9 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
     partIntroExpiredRef.current = false;
     setPartIndex(0);
     setQuestionIndex(0);
-    setStage("part_intro");
-    const introLimit = questionData.parts[0]?.startWithinSeconds ?? 60;
-    startPartIntroCountdown(introLimit);
+    setVisibleMicTestQuestionCount(0);
+    setMicTestStartedAt(Date.now());
+    setStage("mic_test");
   };
 
   const startCurrentQuestion = () => {
@@ -950,16 +1233,84 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
       partAudioRef.current.pause();
       partAudioRef.current.currentTime = 0;
     }
-    setQuestionStartAt(new Date().toISOString());
-    setStage("prep");
-    phaseExpiredRef.current = false;
-    startPhaseCountdown(currentQuestion.prepSeconds);
+    setStage("part_instruction");
   };
 
-  const isExamMode = stage === "part_intro" || stage === "prep" || stage === "answer";
+  const jumpToPartForDev = useCallback(
+    (nextPartIndex: number) => {
+      if (!questionData?.parts[nextPartIndex]) return;
+
+      pausePhaseCountdown();
+      pauseMicTestCountdown();
+      pauseExamNoticeCountdown();
+      pausePartInstructionCountdown();
+      pausePartIntroCountdown();
+      clearMicTestQuestionTimeouts();
+      phaseExpiredRef.current = false;
+      partIntroExpiredRef.current = false;
+
+      if (partAudioRef.current) {
+        partAudioRef.current.pause();
+        partAudioRef.current.currentTime = 0;
+      }
+      if (questionAudioRef.current) {
+        questionAudioRef.current.pause();
+        questionAudioRef.current.currentTime = 0;
+      }
+      void stopAnswerRecording();
+
+      setPartTimeoutMessage("");
+      setPersistStatus("");
+      setQuestionStartAt(null);
+      setVisibleMicTestQuestionCount(0);
+      setMicTestStartedAt(null);
+      setPartIndex(nextPartIndex);
+      setQuestionIndex(0);
+      setStage("part_intro");
+    },
+    [
+      clearMicTestQuestionTimeouts,
+      pauseExamNoticeCountdown,
+      pauseMicTestCountdown,
+      pausePartInstructionCountdown,
+      pausePartIntroCountdown,
+      pausePhaseCountdown,
+      questionData?.parts,
+      stopAnswerRecording,
+    ],
+  );
+
+  const isDevPartJumpEnabled = process.env.NODE_ENV !== "production";
+  const isExamMode =
+    stage === "mic_test" ||
+    stage === "exam_notice" ||
+    stage === "part_intro" ||
+    stage === "part_instruction" ||
+    stage === "prep" ||
+    stage === "answer";
 
   return (
     <main className={styles.main}>
+      {isDevPartJumpEnabled ? (
+        <nav className={styles.devPartJump} aria-label="Development part jump">
+          <p className={styles.devPartJumpLabel}>DEV</p>
+          {Array.from({ length: 4 }, (_, index) => {
+            const part = questionData?.parts[index];
+            return (
+              <button
+                key={index}
+                type="button"
+                className={`${styles.devPartJumpButton} ${partIndex === index ? styles.devPartJumpButtonActive : ""}`}
+                onClick={() => jumpToPartForDev(index)}
+                disabled={!part}
+              >
+                Part {index + 1}
+              </button>
+            );
+          })}
+        </nav>
+      ) : null}
+
       {stage === "completed" ? (
         <section className={styles.completedScreen}>
           <article className={styles.completedCard}>
@@ -971,16 +1322,210 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
             </button>
           </article>
         </section>
+      ) : stage === "saving" ? (
+        <section className={styles.statusScreen}>
+          <JapaneseText
+            className={styles.statusScreenText}
+            tokens={[
+              { text: "問題", reading: "もんだい" },
+              { text: "は" },
+              { text: "終", reading: "お" },
+              { text: "わりですが、" },
+            ]}
+          />
+          <JapaneseText
+            className={styles.statusScreenText}
+            tokens={[
+              { text: "もう" },
+              { text: "少", reading: "すこ" },
+              { text: "しお" },
+              { text: "待", reading: "ま" },
+              { text: "ちください。" },
+            ]}
+          />
+        </section>
+      ) : stage === "timeout" ? (
+        <section className={styles.statusScreen}>
+          <JapaneseText
+            className={styles.timeoutScreenText}
+            tokens={[
+              { text: "タイムアウトにより、" },
+              { text: "試験", reading: "しけん" },
+              { text: "は" },
+              { text: "失格", reading: "しっかく" },
+              { text: "となります。" },
+            ]}
+          />
+        </section>
       ) : isExamMode ? (
         <section className={styles.examFocusLayout}>
-          <article className={styles.card}>
-            {currentPart && (
-              <div className={styles.questionTopRow}>
-                <p className={styles.badge}>{currentPart.title}</p>
+          {stage === "mic_test" ? (
+            <article className={styles.stageScreenCard}>
+              <div className={styles.stageScreenInner}>
+                <h2 className={styles.stageScreenTitle}>マイクのテスト</h2>
+                <JapaneseText
+                  className={styles.stageScreenBody}
+                  tokens={[
+                    { text: "ではマイクのテストをします。" },
+                    { text: "カメラを見て" },
+                    { text: "質問", reading: "しつもん" },
+                    { text: "に" },
+                    { text: "答", reading: "こた" },
+                    { text: "えてください。" },
+                  ]}
+                />
+
+                {visibleMicTestQuestions > 0 ? (
+                  <ol className={styles.micTestList}>
+                    {MIC_TEST_QUESTIONS.slice(0, visibleMicTestQuestions).map((question) => (
+                      <li key={question.id} className={styles.micTestItem}>
+                        <span className={styles.micTestNumber}>{question.id}.</span>
+                        <JapaneseText className={styles.micTestQuestion} tokens={question.tokens} />
+                      </li>
+                    ))}
+                  </ol>
+                ) : null}
               </div>
-            )}
-            <h3>問題 {questionNumberInPart}/{currentPartQuestionCount}</h3>
-            <CountdownTimer label={timerLabel} seconds={timerValue} variant={timerVariant} />
+            </article>
+          ) : stage === "exam_notice" ? (
+            <article className={styles.stageScreenCard}>
+              <div className={styles.stageScreenInner}>
+                <JapaneseText
+                  className={styles.stageScreenTitle}
+                  tokens={[
+                    { text: "試験", reading: "しけん" },
+                    { text: "を" },
+                    { text: "始", reading: "はじ" },
+                    { text: "めます。" },
+                  ]}
+                />
+
+                <ul className={styles.examNoticeList}>
+                  {EXAM_NOTICE_ITEMS.map((item, index) => (
+                    <li key={index} className={styles.examNoticeItem}>
+                      <span className={styles.examNoticeBullet} aria-hidden />
+                      <JapaneseText className={styles.examNoticeText} tokens={item} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </article>
+          ) : stage === "part_instruction" && currentPart ? (
+            <article className={styles.partInstructionScreen}>
+              <div className={styles.partInstructionHeader}>
+                <p className={styles.partInstructionBadge}>{currentPart.title}</p>
+                {currentPart.introCategoryTokens ? (
+                  <JapaneseText className={styles.partInstructionCategory} tokens={currentPart.introCategoryTokens} />
+                ) : null}
+              </div>
+
+              <div className={styles.partInstructionCenter}>
+                {currentPart.introHeadlineTokens ? (
+                  <div className={styles.partInstructionHeadlinePill}>
+                    <JapaneseText className={styles.partInstructionHeadlineText} tokens={currentPart.introHeadlineTokens} />
+                  </div>
+                ) : (
+                  <p className={styles.partInstructionHeadlineText}>{currentPart.description}</p>
+                )}
+
+                {currentPart.introNoteLines ? (
+                  <div className={styles.partInstructionNotes}>
+                    {currentPart.introNoteLines.map((line, index) => (
+                      <JapaneseText key={index} className={styles.partInstructionNoteLine} tokens={line} />
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            </article>
+          ) : stage === "part_intro" && currentPart ? (
+            <article className={styles.partIntroScreen}>
+              <div className={styles.partIntroHeader}>
+                {currentPart.introCategoryTokens ? (
+                  <div className={styles.partIntroLabelBlock}>
+                    <p className={styles.partIntroBadge}>{currentPart.title}</p>
+                    <JapaneseText className={styles.partIntroCategory} tokens={currentPart.introCategoryTokens} />
+                  </div>
+                ) : (
+                  <p className={styles.partIntroBadge}>{currentPart.title}</p>
+                )}
+                <div className={styles.partIntroTimer}>
+                  <CountdownTimer label={timerLabel} seconds={timerValue} variant={timerVariant} />
+                </div>
+              </div>
+
+              <div className={styles.partIntroCenter}>
+                <JapaneseText
+                  className={styles.partIntroDescription}
+                  tokens={[
+                    { text: `${currentPart.title} を` },
+                    { text: "始", reading: "はじ" },
+                    { text: "めます。" },
+                  ]}
+                />
+                <JapaneseText
+                  className={styles.partIntroDescription}
+                  tokens={[
+                    { text: "「スタート」を" },
+                    { text: "押", reading: "お" },
+                    { text: "してください。" },
+                  ]}
+                />
+
+                <button className={`${styles.primaryBtn} ${styles.partIntroStartBtn}`} onClick={startCurrentQuestion}>
+                  スタート
+                </button>
+              </div>
+
+              <div className={styles.partIntroFooter}>
+                <JapaneseText
+                  className={styles.partIntroMeta}
+                  tokens={[
+                    { text: "60" },
+                    { text: "秒", reading: "びょう" },
+                    { text: "をすぎると、" },
+                    { text: "試験", reading: "しけん" },
+                    { text: "が" },
+                    { text: "受", reading: "う" },
+                    { text: "けられません。" },
+                  ]}
+                />
+                <JapaneseText
+                  className={styles.partIntroMeta}
+                  tokens={[
+                    { text: "「スタート」を" },
+                    { text: "押", reading: "お" },
+                    { text: "してください。" },
+                  ]}
+                />
+              </div>
+
+              {currentPart.introAudioUrl && (
+                <audio ref={partAudioRef} preload="metadata" src={currentPart.introAudioUrl} hidden />
+              )}
+            </article>
+          ) : (
+            <article
+              className={`${styles.card} ${isVisualQuestion ? styles.visualQuestionScreen : ""} ${
+                isPart4VisualQuestion ? styles.part4QuestionScreen : ""
+              }`}
+            >
+              {!isPart4VisualQuestion ? (
+                <div className={styles.questionTopRow}>
+                {currentPart ? (
+                  <div className={styles.questionPartHeading}>
+                    <p className={styles.questionPartTitle}>{currentPart.title}</p>
+                    {currentPart.introCategoryTokens ? (
+                      <JapaneseText className={styles.questionPartCategory} tokens={currentPart.introCategoryTokens} />
+                    ) : null}
+                  </div>
+                ) : (
+                  <div />
+                )}
+                <div className={styles.partIntroTimer}>
+                  <CountdownTimer label={timerLabel} seconds={timerValue} variant={timerVariant} />
+                </div>
+                </div>
+              ) : null}
 
             {stage === "part_intro" && currentPart ? (
               <div className={styles.stack}>
@@ -998,17 +1543,86 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
                   {currentQuestion.questionAudioUrl && (
                     <audio ref={questionAudioRef} preload="metadata" src={currentQuestion.questionAudioUrl} hidden />
                   )}
-                  <div className={styles.questionPromptCard}>
-                    <p className={styles.questionPromptLabel}>Question</p>
-                    <p className={styles.questionPromptText}>{currentQuestion.prompt}</p>
-                  </div>
-                  {currentQuestion.imageUrl && (
-                    <img className={styles.questionImage} src={currentQuestion.imageUrl} alt={`Question ${currentQuestion.id}`} />
+                  {stage === "answer" && !isPart3VisualQuestion && !isPart4VisualQuestion ? (
+                    <JapaneseText
+                      className={styles.answerPrompt}
+                      tokens={[
+                        { text: "答", reading: "こた" },
+                        { text: "えてください。" },
+                      ]}
+                    />
+                  ) : null}
+                  {currentQuestion.imageUrl ? (
+                    isPart4VisualQuestion ? (
+                      <div className={styles.part4QuestionStage}>
+                        <div className={styles.part4QuestionTimer}>
+                          <CountdownTimer label={timerLabel} seconds={timerValue} variant={timerVariant} />
+                        </div>
+                        {currentQuestion.promptLines ? (
+                          <div className={styles.part4QuestionPromptCard}>
+                            {currentQuestion.questionLabelTokens ? (
+                              <JapaneseText
+                                className={styles.part4QuestionPromptLabel}
+                                tokens={currentQuestion.questionLabelTokens}
+                              />
+                            ) : null}
+                            <div className={styles.part4QuestionPromptBody}>
+                              {currentQuestion.promptLines.map((line, index) => (
+                                <JapaneseText key={index} className={styles.part4QuestionPromptLine} tokens={line} />
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+                        <div className={styles.part4QuestionImageWrap}>
+                          <img
+                            className={`${styles.part4QuestionImage} ${
+                              stage === "answer" ? styles.part4QuestionImageMuted : ""
+                            }`}
+                            src={currentQuestion.imageUrl}
+                            alt={currentQuestion.imageAlt ?? `Part 4 question ${questionNumberInPart}`}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={styles.visualQuestionStage}>
+                        <div className={styles.visualQuestionBadge}>{questionNumberInPart}番</div>
+                        <div className={styles.visualQuestionImageCard}>
+                          <img
+                            className={`${styles.visualQuestionImage} ${
+                              isPart3VisualQuestion && stage === "answer" ? styles.visualQuestionImageMuted : ""
+                            }`}
+                            src={currentQuestion.imageUrl}
+                            alt={currentQuestion.imageAlt ?? `Part ${partIndex + 1} question ${questionNumberInPart}`}
+                          />
+                          {currentQuestion.imageLabelTokens ? (
+                            <JapaneseText className={styles.visualQuestionLabel} tokens={currentQuestion.imageLabelTokens} />
+                          ) : null}
+                          {isPart3VisualQuestion && stage === "answer" ? (
+                            <JapaneseText
+                              className={styles.part3AnswerPrompt}
+                              tokens={[{ text: "はなしてください。" }]}
+                            />
+                          ) : null}
+                        </div>
+                      </div>
+                    )
+                  ) : currentQuestion.promptLines ? (
+                    <div className={`${styles.questionPromptCard} ${styles.readingPromptCard}`}>
+                      {currentQuestion.promptLines.map((line, index) => (
+                        <JapaneseText key={index} className={styles.readingPromptLine} tokens={line} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className={styles.questionPromptCard}>
+                      <p className={styles.questionPromptLabel}>Question</p>
+                      <p className={styles.questionPromptText}>{currentQuestion.prompt}</p>
+                    </div>
                   )}
                 </div>
               )
             )}
           </article>
+          )}
         </section>
       ) : (
         <>
@@ -1067,7 +1681,7 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
                           <NoMaskIcon />
                         </div>
                       </div>
-                      <h3>ã‚«ãƒ¡ãƒ©ç¢ºèª</h3>
+                      <h3>カメラ確認</h3>
                       <div className={styles.cameraShell}>
                         <video ref={mobileVideoRef} autoPlay muted playsInline className={styles.camera} />
                       </div>
@@ -1168,5 +1782,4 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
     </main>
   );
 }
-
 
