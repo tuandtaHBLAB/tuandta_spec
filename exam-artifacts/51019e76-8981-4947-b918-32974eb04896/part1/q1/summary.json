@@ -1,0 +1,12 @@
+{
+  "examSessionId": "51019e76-8981-4947-b918-32974eb04896",
+  "partId": "part1",
+  "questionId": "q1",
+  "questionPrompt": "すみません、原田さん、ちょっとお願いがあるんですが、よろしいでしょうか。あの、明日の午前9時から会議があるので、その準備を手伝ってもらいたいんです。実は人数が多い会議なので、椅子と机を倉庫から運ばなければならなくて…。それで、明日早めに出社して、一緒にやってもらえませんか。",
+  "startedAt": "2026-05-26T08:29:40.707Z",
+  "endedAt": "2026-05-26T08:30:40.826Z",
+  "highRiskCount": 0,
+  "warnings": 0,
+  "snapshotCount": 0,
+  "nextStep": "Send artifacts to Azure AI scoring pipeline"
+}

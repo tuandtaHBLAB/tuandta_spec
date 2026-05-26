@@ -1,0 +1,71 @@
+{
+  "ok": true,
+  "provider": "mock-azure-speech",
+  "examSessionId": "51019e76-8981-4947-b918-32974eb04896",
+  "partId": "part2",
+  "partTitle": "Part 2",
+  "language": "ja-JP",
+  "scoredAt": "2026-05-26T08:34:29.062Z",
+  "summary": {
+    "questionCount": 3,
+    "pronunciationScore": 85,
+    "accuracyScore": 87,
+    "fluencyScore": 82
+  },
+  "questions": [
+    {
+      "questionId": "q2",
+      "questionPrompt": "先輩から「同僚の結婚祝いを選びたい」と相談されました。どのように提案しますか。",
+      "assessmentMode": "unscripted",
+      "mockTranscript": "Mock transcript for q2. Replace this with Azure Speech recognized text.",
+      "audio": {
+        "fileName": "part2_q2.webm",
+        "size": 482330
+      },
+      "azurePronunciation": {
+        "pronunciationScore": 87,
+        "accuracyScore": 89,
+        "fluencyScore": 84,
+        "completenessScore": null,
+        "referenceText": null,
+        "languageNote": "Mocked response. Real Azure Speech Pronunciation Assessment should use the audio plus language/referenceText."
+      }
+    },
+    {
+      "questionId": "q3",
+      "questionPrompt": "会議後に先輩から「よくできていたね」と言われました。どう返しますか。",
+      "assessmentMode": "unscripted",
+      "mockTranscript": "Mock transcript for q3. Replace this with Azure Speech recognized text.",
+      "audio": {
+        "fileName": "part2_q3.webm",
+        "size": 483296
+      },
+      "azurePronunciation": {
+        "pronunciationScore": 85,
+        "accuracyScore": 87,
+        "fluencyScore": 82,
+        "completenessScore": null,
+        "referenceText": null,
+        "languageNote": "Mocked response. Real Azure Speech Pronunciation Assessment should use the audio plus language/referenceText."
+      }
+    },
+    {
+      "questionId": "q4",
+      "questionPrompt": "取引先から今夜の食事に誘われましたが予定があります。丁寧に断るにはどうしますか。",
+      "assessmentMode": "unscripted",
+      "mockTranscript": "Mock transcript for q4. Replace this with Azure Speech recognized text.",
+      "audio": {
+        "fileName": "part2_q4.webm",
+        "size": 482330
+      },
+      "azurePronunciation": {
+        "pronunciationScore": 83,
+        "accuracyScore": 85,
+        "fluencyScore": 80,
+        "completenessScore": null,
+        "referenceText": null,
+        "languageNote": "Mocked response. Real Azure Speech Pronunciation Assessment should use the audio plus language/referenceText."
+      }
+    }
+  ]
+}

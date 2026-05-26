@@ -1,0 +1,12 @@
+{
+  "examSessionId": "51019e76-8981-4947-b918-32974eb04896",
+  "partId": "part2",
+  "questionId": "q2",
+  "questionPrompt": "先輩から「同僚の結婚祝いを選びたい」と相談されました。どのように提案しますか。",
+  "startedAt": "2026-05-26T08:31:22.100Z",
+  "endedAt": "2026-05-26T08:32:20.178Z",
+  "highRiskCount": 0,
+  "warnings": 0,
+  "snapshotCount": 0,
+  "nextStep": "Send artifacts to Azure AI scoring pipeline"
+}

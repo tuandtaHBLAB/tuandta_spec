@@ -1,0 +1,12 @@
+{
+  "examSessionId": "51019e76-8981-4947-b918-32974eb04896",
+  "partId": "part4",
+  "questionId": "q8",
+  "questionPrompt": "日本では、今、若者の6人に1人が転職したいと思っています。あなたは転職についてどう思いますか。メリットとデメリットをあげて説明してください。",
+  "startedAt": "2026-05-26T08:40:05.220Z",
+  "endedAt": "2026-05-26T08:42:05.381Z",
+  "highRiskCount": 0,
+  "warnings": 3,
+  "snapshotCount": 20,
+  "nextStep": "Send artifacts to Azure AI scoring pipeline"
+}

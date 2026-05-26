@@ -1,9 +1,9 @@
 ⨯ Another next dev server is already running.
 
 - Local:        http://localhost:3001
-- PID:          23596
+- PID:          30228
 - Dir:          D:\KotobaAI\tuandta_spec
 - Log:          .next\dev\logs\next-development.log
 
-Run taskkill /PID 23596 /F to stop it.
+Run taskkill /PID 30228 /F to stop it.
 error Command failed with exit code 1.

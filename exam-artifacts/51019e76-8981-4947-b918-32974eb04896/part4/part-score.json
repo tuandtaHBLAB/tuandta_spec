@@ -1,0 +1,53 @@
+{
+  "ok": true,
+  "provider": "mock-azure-speech",
+  "examSessionId": "51019e76-8981-4947-b918-32974eb04896",
+  "partId": "part4",
+  "partTitle": "Part 4",
+  "language": "ja-JP",
+  "scoredAt": "2026-05-26T08:42:05.622Z",
+  "summary": {
+    "questionCount": 2,
+    "pronunciationScore": 86,
+    "accuracyScore": 88,
+    "fluencyScore": 83
+  },
+  "questions": [
+    {
+      "questionId": "q7",
+      "questionPrompt": "どうして日本語の勉強を始めたのか。",
+      "assessmentMode": "unscripted",
+      "mockTranscript": "Mock transcript for q7. Replace this with Azure Speech recognized text.",
+      "audio": {
+        "fileName": "part4_q7.webm",
+        "size": 966328
+      },
+      "azurePronunciation": {
+        "pronunciationScore": 87,
+        "accuracyScore": 89,
+        "fluencyScore": 84,
+        "completenessScore": null,
+        "referenceText": null,
+        "languageNote": "Mocked response. Real Azure Speech Pronunciation Assessment should use the audio plus language/referenceText."
+      }
+    },
+    {
+      "questionId": "q8",
+      "questionPrompt": "日本では、今、若者の6人に1人が転職したいと思っています。あなたは転職についてどう思いますか。メリットとデメリットをあげて説明してください。",
+      "assessmentMode": "unscripted",
+      "mockTranscript": "Mock transcript for q8. Replace this with Azure Speech recognized text.",
+      "audio": {
+        "fileName": "part4_q8.webm",
+        "size": 967326
+      },
+      "azurePronunciation": {
+        "pronunciationScore": 85,
+        "accuracyScore": 87,
+        "fluencyScore": 82,
+        "completenessScore": null,
+        "referenceText": null,
+        "languageNote": "Mocked response. Real Azure Speech Pronunciation Assessment should use the audio plus language/referenceText."
+      }
+    }
+  ]
+}

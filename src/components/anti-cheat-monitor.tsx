@@ -39,6 +39,7 @@ type Question = {
   imageLabelTokens?: FuriganaToken[];
   questionLabelTokens?: FuriganaToken[];
   questionAudioUrl?: string;
+  answerAudioUrl?: string;
   prepSeconds: number;
   answerSeconds: number;
   tips: string;
@@ -51,13 +52,61 @@ type Part = {
   introCategoryTokens?: FuriganaToken[];
   introHeadlineTokens?: FuriganaToken[];
   introNoteLines?: FuriganaToken[][];
+  startAudioUrl?: string;
   introAudioUrl?: string;
+  instructionSeconds?: number;
   startWithinSeconds: number;
   questions: Question[];
 };
 
 type QuestionData = {
   parts: Part[];
+};
+
+type PartAnswerForScoring = {
+  examSessionId: string;
+  partId: string;
+  partTitle: string;
+  questionId: string;
+  questionPrompt: string;
+  referenceText: string | null;
+  assessmentMode: "scripted" | "unscripted";
+  startedAt: string;
+  endedAt: string;
+  audioBlob: Blob | null;
+};
+
+type PartScore = {
+  provider: string;
+  examSessionId: string;
+  partId: string;
+  partTitle: string;
+  language: string;
+  scoredAt: string;
+  summary: {
+    questionCount: number;
+    pronunciationScore: number;
+    accuracyScore: number;
+    fluencyScore: number;
+  };
+  questions: Array<{
+    questionId: string;
+    questionPrompt: string;
+    assessmentMode: "scripted" | "unscripted";
+    mockTranscript: string | null;
+    audio: {
+      fileName: string;
+      size: number;
+    };
+    azurePronunciation: {
+      pronunciationScore: number;
+      accuracyScore: number;
+      fluencyScore: number;
+      completenessScore: number | null;
+      referenceText: string | null;
+      languageNote: string;
+    };
+  }>;
 };
 
 type ExamStage =
@@ -97,8 +146,8 @@ const CHECKPOINTS = [
 const LOOK_AWAY_DEG = 25;
 const HEAD_DOWN_DEG = 20;
 const MAX_HIGH_RISK = 3;
-const MIC_TEST_QUESTION_HOLD_SECONDS = 10;
-const EXAM_NOTICE_SECONDS = 15;
+const MIC_TEST_SECONDS = 60;
+const EXAM_NOTICE_SECONDS = 20;
 const PART_INSTRUCTION_SECONDS = 10;
 const VIOLATION_LABELS: Record<ViolationType, string> = {
   FACE_MISSING: "顔の未検出",
@@ -148,7 +197,18 @@ const MIC_TEST_QUESTIONS: { id: number; tokens: FuriganaToken[] }[] = [
   },
 ];
 
-const MIC_TEST_SECONDS = (MIC_TEST_QUESTIONS.length + 1) * MIC_TEST_QUESTION_HOLD_SECONDS;
+const MIC_TEST_QUESTION_START_MS = [0, 15_000, 31_000, 46_000];
+const START_CAMERA_TEST_AUDIO_URL = "/sound/Start_camera_test.mp3";
+const START_PRESS_NEXT_AUDIO_URL = "/sound/Start_Press_Next.mp3";
+const START_MIC_TEST_AUDIO_URL = "/sound/Start_mic_test.mp3";
+const START_LET_START_AUDIO_URL = "/sound/Start_Let_Start.mp3";
+const END_AUDIO_URL = "/sound/End.mp3";
+const PART1_START_AUDIO_URL = "/sound/Part1/Part1_start.mp3";
+const PART1_INTRO_AUDIO_URL = "/sound/Part1/Part1_intro.mp3";
+const PART1_PREP_AUDIO_URL = "/sound/Part1/Part1_15sec.mp3";
+const PART1_PLEASE_READ_AUDIO_URL = "/sound/Part1/Part1_Please_Read.mp3";
+const PART1_INSTRUCTION_SECONDS = 11;
+const SPEECH_ASSESSMENT_LANGUAGE = "ja-JP";
 
 const EXAM_NOTICE_ITEMS: FuriganaToken[][] = [
   [
@@ -258,16 +318,28 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
   const animationFrameRef = useRef<number | null>(null);
   const phaseExpiredRef = useRef(false);
   const partIntroExpiredRef = useRef(false);
+  const startCameraTestAudioRef = useRef<HTMLAudioElement | null>(null);
+  const startPressNextAudioRef = useRef<HTMLAudioElement | null>(null);
+  const startMicTestAudioRef = useRef<HTMLAudioElement | null>(null);
+  const startLetStartAudioRef = useRef<HTMLAudioElement | null>(null);
+  const endAudioRef = useRef<HTMLAudioElement | null>(null);
+  const part1StartAudioRef = useRef<HTMLAudioElement | null>(null);
+  const part1IntroAudioRef = useRef<HTMLAudioElement | null>(null);
+  const part1PrepAudioRef = useRef<HTMLAudioElement | null>(null);
+  const part1PleaseReadAudioRef = useRef<HTMLAudioElement | null>(null);
   const partAudioRef = useRef<HTMLAudioElement | null>(null);
+  const partInstructionAudioRef = useRef<HTMLAudioElement | null>(null);
   const questionAudioRef = useRef<HTMLAudioElement | null>(null);
+  const answerAudioRef = useRef<HTMLAudioElement | null>(null);
   const answerRecorderRef = useRef<MediaRecorder | null>(null);
   const answerChunksRef = useRef<BlobPart[]>([]);
+  const examSessionIdRef = useRef(crypto.randomUUID());
+  const partAnswersForScoringRef = useRef<Record<string, PartAnswerForScoring[]>>({});
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const audioMeterFrameRef = useRef<number | null>(null);
   const lastAudioMeterUpdateRef = useRef(0);
   const lastAudioLevelRef = useRef(0);
-  const attemptedHomeAutoOpenRef = useRef(false);
   const micTestQuestionTimeoutsRef = useRef<number[]>([]);
 
   const [questionData, setQuestionData] = useState<QuestionData | null>(null);
@@ -282,8 +354,8 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
 
   const [cameraError, setCameraError] = useState("");
   const [deviceCheckStatus, setDeviceCheckStatus] = useState("");
-  const [isCameraChecked, setIsCameraChecked] = useState(false);
-  const [isMicChecked, setIsMicChecked] = useState(false);
+  const [, setIsCameraChecked] = useState(false);
+  const [, setIsMicChecked] = useState(false);
   const [isCheckingDevices, setIsCheckingDevices] = useState(false);
   const [detectorStatus, setDetectorStatus] = useState("フェイス検出は未初期化です");
   const [isCameraReady, setIsCameraReady] = useState(false);
@@ -291,10 +363,11 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
   const [highRiskCount, setHighRiskCount] = useState(0);
   const [highRiskPopup, setHighRiskPopup] = useState<string | null>(null);
   const [persistStatus, setPersistStatus] = useState("");
+  const [partScores, setPartScores] = useState<PartScore[]>([]);
   const [partTimeoutMessage, setPartTimeoutMessage] = useState("");
   const [audioLevel, setAudioLevel] = useState(0);
   const [visibleMicTestQuestionCount, setVisibleMicTestQuestionCount] = useState(0);
-  const [micTestStartedAt, setMicTestStartedAt] = useState<number | null>(null);
+  const [isHomePrecheckComplete, setIsHomePrecheckComplete] = useState(false);
 
   const cooldownMapRef = useRef<Record<ViolationType, number>>({
     FACE_MISSING: 0,
@@ -800,16 +873,6 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
     }
   }, [isCameraReady, stage]);
 
-  useEffect(() => {
-    if (stage !== "home") {
-      attemptedHomeAutoOpenRef.current = false;
-      return;
-    }
-    if (attemptedHomeAutoOpenRef.current) return;
-    attemptedHomeAutoOpenRef.current = true;
-    void ensureDevicesReady();
-  }, [ensureDevicesReady, stage]);
-
   const detectLoop = useCallback(() => {
     const detector = faceLandmarkerRef.current;
     const video = videoRef.current;
@@ -949,23 +1012,60 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
     clearMicTestQuestionTimeouts();
     phaseExpiredRef.current = false;
     partIntroExpiredRef.current = false;
+    if (startCameraTestAudioRef.current) {
+      startCameraTestAudioRef.current.pause();
+      startCameraTestAudioRef.current.currentTime = 0;
+    }
+    if (startPressNextAudioRef.current) {
+      startPressNextAudioRef.current.pause();
+      startPressNextAudioRef.current.currentTime = 0;
+    }
+    if (startMicTestAudioRef.current) {
+      startMicTestAudioRef.current.pause();
+      startMicTestAudioRef.current.currentTime = 0;
+    }
+    if (startLetStartAudioRef.current) {
+      startLetStartAudioRef.current.pause();
+      startLetStartAudioRef.current.currentTime = 0;
+    }
+    [
+      part1StartAudioRef.current,
+      part1IntroAudioRef.current,
+      part1PrepAudioRef.current,
+      part1PleaseReadAudioRef.current,
+    ].forEach((audio) => {
+      if (!audio) return;
+      audio.pause();
+      audio.currentTime = 0;
+    });
     if (partAudioRef.current) {
       partAudioRef.current.pause();
       partAudioRef.current.currentTime = 0;
     }
+    if (partInstructionAudioRef.current) {
+      partInstructionAudioRef.current.pause();
+      partInstructionAudioRef.current.currentTime = 0;
+    }
     if (questionAudioRef.current) {
       questionAudioRef.current.pause();
       questionAudioRef.current.currentTime = 0;
+    }
+    if (answerAudioRef.current) {
+      answerAudioRef.current.pause();
+      answerAudioRef.current.currentTime = 0;
     }
     void stopAnswerRecording();
     setStage("home");
     setPartIndex(0);
     setQuestionIndex(0);
     setQuestionStartAt(null);
-    setMicTestStartedAt(null);
     setVisibleMicTestQuestionCount(0);
+    setIsHomePrecheckComplete(false);
     setHighRiskCount(0);
     setPersistStatus("");
+    setPartScores([]);
+    examSessionIdRef.current = crypto.randomUUID();
+    partAnswersForScoringRef.current = {};
     if (message) setPartTimeoutMessage(message);
   }, [
     pauseExamNoticeCountdown,
@@ -977,9 +1077,63 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
     stopAnswerRecording,
   ]);
 
+  const scorePartAnswers = useCallback(async (part: Part) => {
+    const answers = partAnswersForScoringRef.current[part.id] ?? [];
+    if (answers.length === 0) return null;
+
+    const formData = new FormData();
+    const payload = {
+      examSessionId: examSessionIdRef.current,
+      partId: part.id,
+      partTitle: part.title,
+      language: SPEECH_ASSESSMENT_LANGUAGE,
+      questions: answers.map((answer, index) => {
+        const audioField = `audio_${answer.questionId}`;
+        if (answer.audioBlob) {
+          formData.append(
+            audioField,
+            new File([answer.audioBlob], `${answer.partId}_${answer.questionId}.webm`, {
+              type: answer.audioBlob.type || "audio/webm",
+            }),
+          );
+        }
+
+        return {
+          questionId: answer.questionId,
+          questionPrompt: answer.questionPrompt,
+          referenceText: answer.referenceText,
+          assessmentMode: answer.assessmentMode,
+          startedAt: answer.startedAt,
+          endedAt: answer.endedAt,
+          audioField,
+          audioFileName: `${answer.partId}_${answer.questionId}.webm`,
+          audioSize: answer.audioBlob?.size ?? 0,
+          order: index + 1,
+        };
+      }),
+    };
+
+    formData.append("payload", JSON.stringify(payload));
+
+    const response = await fetch("/api/exam/score-part", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) throw new Error("Cannot score part");
+
+    const score = (await response.json()) as PartScore;
+    setPartScores((prev) => {
+      const others = prev.filter((item) => item.partId !== score.partId);
+      return [...others, score].sort((a, b) => a.partId.localeCompare(b.partId));
+    });
+    setPersistStatus(`Scored ${part.title}: ${score.summary.pronunciationScore}/100`);
+    return score;
+  }, []);
+
   const saveQuestionArtifacts = useCallback(
     async (endedAt: string, audioBlob: Blob | null) => {
-      if (!currentPart || !currentQuestion || !questionStartAt) return;
+      if (!currentPart || !currentQuestion || !questionStartAt) return null;
 
       const inRange = (timestamp: string) => {
         const value = new Date(timestamp).getTime();
@@ -991,6 +1145,7 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
       const warnings = questionViolations.filter((item) => item.severity === "WARNING").length;
 
       const payload = {
+        examSessionId: examSessionIdRef.current,
         partId: currentPart.id,
         questionId: currentQuestion.id,
         questionPrompt: currentQuestion.prompt,
@@ -1015,11 +1170,33 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
 
       if (!response.ok) {
         setPersistStatus("試験データの保存に失敗しました。サーバーログを確認してください。");
-        return;
+        return null;
       }
 
       const data = (await response.json()) as { folderName: string };
       setPersistStatus(`保存先フォルダ: ${data.folderName}`);
+
+      const answerForScoring: PartAnswerForScoring = {
+        examSessionId: examSessionIdRef.current,
+        partId: currentPart.id,
+        partTitle: currentPart.title,
+        questionId: currentQuestion.id,
+        questionPrompt: currentQuestion.prompt,
+        referenceText: currentPart.id === "part1" ? currentQuestion.prompt : null,
+        assessmentMode: currentPart.id === "part1" ? "scripted" : "unscripted",
+        startedAt: questionStartAt,
+        endedAt,
+        audioBlob,
+      };
+
+      partAnswersForScoringRef.current[currentPart.id] = [
+        ...(partAnswersForScoringRef.current[currentPart.id] ?? []).filter(
+          (item) => item.questionId !== currentQuestion.id,
+        ),
+        answerForScoring,
+      ];
+
+      return answerForScoring;
     },
     [currentPart, currentQuestion, highRiskCount, logs, questionStartAt, snapshots],
   );
@@ -1031,7 +1208,7 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
     const isLastQuestionInPart = questionIndex >= currentPart.questions.length - 1;
     const isLastPart = partIndex >= questionData.parts.length - 1;
 
-    if (isLastQuestionInPart && isLastPart) {
+    if (isLastQuestionInPart) {
       setStage("saving");
     }
 
@@ -1039,8 +1216,11 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
       const endedAt = new Date().toISOString();
       const audioBlob = await stopAnswerRecording();
       await saveQuestionArtifacts(endedAt, audioBlob);
+      if (isLastQuestionInPart) {
+        await scorePartAnswers(currentPart);
+      }
     } catch {
-      setPersistStatus("保存時にエラーが発生しましたが、試験は完了として処理しました。");
+      setPersistStatus("保存または採点時にエラーが発生しましたが、試験は継続します。");
     }
 
     if (isLastQuestionInPart && isLastPart) {
@@ -1079,6 +1259,7 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
     questionData,
     questionIndex,
     saveQuestionArtifacts,
+    scorePartAnswers,
     startAnswerRecording,
     startPhaseCountdown,
     stopAnswerRecording,
@@ -1101,9 +1282,18 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
       pausePartInstructionCountdown();
       return;
     }
-    startPartInstructionCountdown(PART_INSTRUCTION_SECONDS);
+    startPartInstructionCountdown(
+      currentPart?.instructionSeconds ??
+        (currentPart?.id === "part1" ? PART1_INSTRUCTION_SECONDS : PART_INSTRUCTION_SECONDS),
+    );
     return () => pausePartInstructionCountdown();
-  }, [pausePartInstructionCountdown, stage, startPartInstructionCountdown]);
+  }, [
+    currentPart?.id,
+    currentPart?.instructionSeconds,
+    pausePartInstructionCountdown,
+    stage,
+    startPartInstructionCountdown,
+  ]);
 
   useEffect(() => {
     if (!highRiskPopup) return;
@@ -1137,10 +1327,10 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
     startMicTestCountdown(MIC_TEST_SECONDS);
 
     clearMicTestQuestionTimeouts();
-    micTestQuestionTimeoutsRef.current = MIC_TEST_QUESTIONS.map((_, index) =>
+    micTestQuestionTimeoutsRef.current = MIC_TEST_QUESTION_START_MS.map((startMs, index) =>
       window.setTimeout(
         () => setVisibleMicTestQuestionCount(index + 1),
-        (index + 1) * MIC_TEST_QUESTION_HOLD_SECONDS * 1000,
+        startMs,
       ),
     );
 
@@ -1178,16 +1368,132 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
   */}, [currentPart?.startWithinSeconds, pausePartIntroCountdown, stage, startPartIntroCountdown]);
 
   useEffect(() => {
-    if (stage !== "part_intro" || !currentPart?.introAudioUrl || !partAudioRef.current) return;
+    const audio = startCameraTestAudioRef.current;
+    if (!audio) return;
+
+    if (stage !== "home") {
+      audio.pause();
+      audio.currentTime = 0;
+      return;
+    }
+
+    audio.currentTime = 0;
+    void safePlay(audio);
+
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+    };
+  }, [stage]);
+
+  useEffect(() => {
+    const audio = startMicTestAudioRef.current;
+    if (!audio) return;
+
+    if (stage !== "mic_test") {
+      audio.pause();
+      audio.currentTime = 0;
+      return;
+    }
+
+    audio.currentTime = 0;
+    void safePlay(audio);
+
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+    };
+  }, [stage]);
+
+  useEffect(() => {
+    const audio = startLetStartAudioRef.current;
+    if (!audio) return;
+
+    if (stage !== "exam_notice") {
+      audio.pause();
+      audio.currentTime = 0;
+      return;
+    }
+
+    audio.currentTime = 0;
+    void safePlay(audio);
+
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+    };
+  }, [stage]);
+
+  useEffect(() => {
+    const audio = endAudioRef.current;
+    if (!audio) return;
+
+    if (stage !== "completed") {
+      audio.pause();
+      audio.currentTime = 0;
+      return;
+    }
+
+    audio.currentTime = 0;
+    void safePlay(audio);
+
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+    };
+  }, [stage]);
+
+  useEffect(() => {
+    if (stage !== "part_intro") return;
+    if (currentPart?.id === "part1") {
+      if (!part1StartAudioRef.current) return;
+      part1StartAudioRef.current.currentTime = 0;
+      void safePlay(part1StartAudioRef.current);
+      return;
+    }
+    if (!currentPart?.startAudioUrl || !partAudioRef.current) return;
     partAudioRef.current.currentTime = 0;
     void safePlay(partAudioRef.current);
+  }, [currentPart?.id, currentPart?.startAudioUrl, stage]);
+
+  useEffect(() => {
+    if (stage !== "part_instruction") return;
+    if (currentPart?.id === "part1") {
+      if (!part1IntroAudioRef.current) return;
+      part1IntroAudioRef.current.currentTime = 0;
+      void safePlay(part1IntroAudioRef.current);
+      return;
+    }
+    if (!currentPart?.introAudioUrl || !partInstructionAudioRef.current) return;
+    partInstructionAudioRef.current.currentTime = 0;
+    void safePlay(partInstructionAudioRef.current);
   }, [currentPart?.id, currentPart?.introAudioUrl, stage]);
 
   useEffect(() => {
-    if (stage !== "prep" || !currentQuestion?.questionAudioUrl || !questionAudioRef.current) return;
+    if (stage !== "prep") return;
+    if (currentPart?.id === "part1") {
+      if (!part1PrepAudioRef.current) return;
+      part1PrepAudioRef.current.currentTime = 0;
+      void safePlay(part1PrepAudioRef.current);
+      return;
+    }
+    if (!currentQuestion?.questionAudioUrl || !questionAudioRef.current) return;
     questionAudioRef.current.currentTime = 0;
     void safePlay(questionAudioRef.current);
-  }, [currentQuestion?.id, currentQuestion?.questionAudioUrl, stage]);
+  }, [currentPart?.id, currentQuestion?.id, currentQuestion?.questionAudioUrl, stage]);
+
+  useEffect(() => {
+    if (stage !== "answer") return;
+    if (currentPart?.id === "part1") {
+      if (!part1PleaseReadAudioRef.current) return;
+      part1PleaseReadAudioRef.current.currentTime = 0;
+      void safePlay(part1PleaseReadAudioRef.current);
+      return;
+    }
+    if (!currentQuestion?.answerAudioUrl || !answerAudioRef.current) return;
+    answerAudioRef.current.currentTime = 0;
+    void safePlay(answerAudioRef.current);
+  }, [currentPart?.id, currentQuestion?.answerAudioUrl, currentQuestion?.id, stage]);
 
   const totalQuestions = useMemo(
     () => questionData?.parts.reduce((acc, part) => acc + part.questions.length, 0) ?? 0,
@@ -1196,33 +1502,57 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
 
   const questionNumberInPart = questionIndex + 1;
   const isVisualQuestion = !!currentQuestion?.imageUrl;
+  const isPart2VisualQuestion = currentPart?.id === "part2" && isVisualQuestion;
   const isPart3VisualQuestion = currentPart?.id === "part3" && isVisualQuestion;
   const isPart4VisualQuestion = currentPart?.id === "part4" && isVisualQuestion;
   const timerLabel = stage === "part_intro" ? "開始まで" : stage === "prep" ? "準備" : "回答";
   const timerValue = stage === "part_intro" ? partIntroRemainingSeconds : phaseRemainingSeconds;
   const timerVariant = stage === "prep" ? "prep" : stage === "answer" ? "answer" : "default";
-  const visibleMicTestQuestions =
-    stage === "mic_test" && micTestStartedAt !== null
-      ? Date.now() - micTestStartedAt < MIC_TEST_QUESTION_HOLD_SECONDS * 1000
-        ? 0
-        : visibleMicTestQuestionCount
-      : 0;
-  const isReadyToStart = isCameraChecked && isMicChecked && !!questionData;
+  const visibleMicTestQuestions = stage === "mic_test" ? visibleMicTestQuestionCount : 0;
+  const isReadyToStart = !!questionData;
+  const homeStartButtonText = isHomePrecheckComplete ? "Next" : "模擬試験を開始";
   const startExamHint = isCheckingDevices
-    ? "Camera and mic are opening. The start button will unlock automatically."
+    ? "Camera and mic are opening. Please wait."
     : !isReadyToStart
-      ? "Please wait until camera and mic are ready."
+      ? "Please wait until questions are ready."
       : "";
+  const totalScoredQuestions = partScores.reduce((sum, score) => sum + score.summary.questionCount, 0);
+  const finalPronunciationScore =
+    partScores.length === 0
+      ? 0
+      : Math.round(
+          partScores.reduce(
+            (sum, score) => sum + score.summary.pronunciationScore * score.summary.questionCount,
+            0,
+          ) / Math.max(1, totalScoredQuestions),
+        );
 
   const startExam = async () => {
-    if (!questionData?.parts.length || !isReadyToStart) return;
+    if (!questionData?.parts.length || !isReadyToStart || isCheckingDevices) return;
+    if (!isHomePrecheckComplete) {
+      if (startCameraTestAudioRef.current) {
+        startCameraTestAudioRef.current.pause();
+        startCameraTestAudioRef.current.currentTime = 0;
+      }
+      if (startPressNextAudioRef.current) {
+        startPressNextAudioRef.current.currentTime = 0;
+        void safePlay(startPressNextAudioRef.current);
+      }
+      const devicesReady = await ensureDevicesReady();
+      if (!devicesReady) return;
+      setIsHomePrecheckComplete(true);
+      return;
+    }
+
     setPartTimeoutMessage("");
     phaseExpiredRef.current = false;
     partIntroExpiredRef.current = false;
+    examSessionIdRef.current = crypto.randomUUID();
+    partAnswersForScoringRef.current = {};
+    setPartScores([]);
     setPartIndex(0);
     setQuestionIndex(0);
     setVisibleMicTestQuestionCount(0);
-    setMicTestStartedAt(Date.now());
     setStage("mic_test");
   };
 
@@ -1232,6 +1562,14 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
     if (partAudioRef.current) {
       partAudioRef.current.pause();
       partAudioRef.current.currentTime = 0;
+    }
+    if (partInstructionAudioRef.current) {
+      partInstructionAudioRef.current.pause();
+      partInstructionAudioRef.current.currentTime = 0;
+    }
+    if (part1StartAudioRef.current) {
+      part1StartAudioRef.current.pause();
+      part1StartAudioRef.current.currentTime = 0;
     }
     setStage("part_instruction");
   };
@@ -1253,9 +1591,27 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
         partAudioRef.current.pause();
         partAudioRef.current.currentTime = 0;
       }
+      if (partInstructionAudioRef.current) {
+        partInstructionAudioRef.current.pause();
+        partInstructionAudioRef.current.currentTime = 0;
+      }
+      [
+        part1StartAudioRef.current,
+        part1IntroAudioRef.current,
+        part1PrepAudioRef.current,
+        part1PleaseReadAudioRef.current,
+      ].forEach((audio) => {
+        if (!audio) return;
+        audio.pause();
+        audio.currentTime = 0;
+      });
       if (questionAudioRef.current) {
         questionAudioRef.current.pause();
         questionAudioRef.current.currentTime = 0;
+      }
+      if (answerAudioRef.current) {
+        answerAudioRef.current.pause();
+        answerAudioRef.current.currentTime = 0;
       }
       void stopAnswerRecording();
 
@@ -1263,7 +1619,6 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
       setPersistStatus("");
       setQuestionStartAt(null);
       setVisibleMicTestQuestionCount(0);
-      setMicTestStartedAt(null);
       setPartIndex(nextPartIndex);
       setQuestionIndex(0);
       setStage("part_intro");
@@ -1291,6 +1646,15 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
 
   return (
     <main className={styles.main}>
+      <audio ref={startCameraTestAudioRef} preload="auto" src={START_CAMERA_TEST_AUDIO_URL} hidden />
+      <audio ref={startPressNextAudioRef} preload="auto" src={START_PRESS_NEXT_AUDIO_URL} hidden />
+      <audio ref={startMicTestAudioRef} preload="auto" src={START_MIC_TEST_AUDIO_URL} hidden />
+      <audio ref={startLetStartAudioRef} preload="auto" src={START_LET_START_AUDIO_URL} hidden />
+      <audio ref={endAudioRef} preload="auto" src={END_AUDIO_URL} hidden />
+      <audio ref={part1StartAudioRef} preload="auto" src={PART1_START_AUDIO_URL} hidden />
+      <audio ref={part1IntroAudioRef} preload="auto" src={PART1_INTRO_AUDIO_URL} hidden />
+      <audio ref={part1PrepAudioRef} preload="auto" src={PART1_PREP_AUDIO_URL} hidden />
+      <audio ref={part1PleaseReadAudioRef} preload="auto" src={PART1_PLEASE_READ_AUDIO_URL} hidden />
       {isDevPartJumpEnabled ? (
         <nav className={styles.devPartJump} aria-label="Development part jump">
           <p className={styles.devPartJumpLabel}>DEV</p>
@@ -1314,8 +1678,39 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
       {stage === "completed" ? (
         <section className={styles.completedScreen}>
           <article className={styles.completedCard}>
+            <p className={styles.completedKicker}>Mock Azure Speech Result</p>
             <p className={styles.completedText}>これですべての問題は終わりです。</p>
-            <p className={styles.completedText}>ありがとうございました。</p>
+            <div className={styles.resultScorePanel}>
+              <span className={styles.resultScoreLabel}>Pronunciation</span>
+              <strong className={styles.resultScoreValue}>{finalPronunciationScore}</strong>
+              <span className={styles.resultScoreMax}>/100</span>
+            </div>
+            <div className={styles.resultPartGrid}>
+              {partScores.map((score) => (
+                <section key={score.partId} className={styles.resultPartCard}>
+                  <div className={styles.resultPartHeader}>
+                    <span className={styles.resultPartTitle}>{score.partTitle}</span>
+                    <strong className={styles.resultPartScore}>{score.summary.pronunciationScore}</strong>
+                  </div>
+                  <div className={styles.resultMetricRow}>
+                    <span>Accuracy</span>
+                    <strong>{score.summary.accuracyScore}</strong>
+                  </div>
+                  <div className={styles.resultMetricRow}>
+                    <span>Fluency</span>
+                    <strong>{score.summary.fluencyScore}</strong>
+                  </div>
+                  <div className={styles.resultQuestionList}>
+                    {score.questions.map((question) => (
+                      <div key={question.questionId} className={styles.resultQuestionItem}>
+                        <span>{question.questionId.toUpperCase()}</span>
+                        <strong>{question.azurePronunciation.pronunciationScore}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
             {!!persistStatus && <p className={styles.completedStatus}>{persistStatus}</p>}
             <button className={styles.completedBtn} onClick={() => backToHome()}>
               終了
@@ -1375,16 +1770,18 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
                   ]}
                 />
 
-                {visibleMicTestQuestions > 0 ? (
-                  <ol className={styles.micTestList}>
-                    {MIC_TEST_QUESTIONS.slice(0, visibleMicTestQuestions).map((question) => (
-                      <li key={question.id} className={styles.micTestItem}>
-                        <span className={styles.micTestNumber}>{question.id}.</span>
+                <ol className={styles.micTestList}>
+                  {MIC_TEST_QUESTIONS.map((question, index) => (
+                    <li key={question.id} className={styles.micTestItem}>
+                      <span className={styles.micTestNumber}>{question.id}.</span>
+                      {index < visibleMicTestQuestions ? (
                         <JapaneseText className={styles.micTestQuestion} tokens={question.tokens} />
-                      </li>
-                    ))}
-                  </ol>
-                ) : null}
+                      ) : (
+                        <span className={styles.micTestQuestion} aria-hidden />
+                      )}
+                    </li>
+                  ))}
+                </ol>
               </div>
             </article>
           ) : stage === "exam_notice" ? (
@@ -1436,6 +1833,10 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
                   </div>
                 ) : null}
               </div>
+
+              {currentPart.introAudioUrl && currentPart.id !== "part1" ? (
+                <audio ref={partInstructionAudioRef} preload="metadata" src={currentPart.introAudioUrl} hidden />
+              ) : null}
             </article>
           ) : stage === "part_intro" && currentPart ? (
             <article className={styles.partIntroScreen}>
@@ -1499,8 +1900,8 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
                 />
               </div>
 
-              {currentPart.introAudioUrl && (
-                <audio ref={partAudioRef} preload="metadata" src={currentPart.introAudioUrl} hidden />
+              {currentPart.startAudioUrl && (
+                <audio ref={partAudioRef} preload="metadata" src={currentPart.startAudioUrl} hidden />
               )}
             </article>
           ) : (
@@ -1543,7 +1944,10 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
                   {currentQuestion.questionAudioUrl && (
                     <audio ref={questionAudioRef} preload="metadata" src={currentQuestion.questionAudioUrl} hidden />
                   )}
-                  {stage === "answer" && !isPart3VisualQuestion && !isPart4VisualQuestion ? (
+                  {currentQuestion.answerAudioUrl && (
+                    <audio ref={answerAudioRef} preload="metadata" src={currentQuestion.answerAudioUrl} hidden />
+                  )}
+                  {stage === "answer" && !isVisualQuestion ? (
                     <JapaneseText
                       className={styles.answerPrompt}
                       tokens={[
@@ -1589,7 +1993,9 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
                         <div className={styles.visualQuestionImageCard}>
                           <img
                             className={`${styles.visualQuestionImage} ${
-                              isPart3VisualQuestion && stage === "answer" ? styles.visualQuestionImageMuted : ""
+                              (isPart2VisualQuestion || isPart3VisualQuestion) && stage === "answer"
+                                ? styles.visualQuestionImageMuted
+                                : ""
                             }`}
                             src={currentQuestion.imageUrl}
                             alt={currentQuestion.imageAlt ?? `Part ${partIndex + 1} question ${questionNumberInPart}`}
@@ -1601,6 +2007,15 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
                             <JapaneseText
                               className={styles.part3AnswerPrompt}
                               tokens={[{ text: "はなしてください。" }]}
+                            />
+                          ) : null}
+                          {isPart2VisualQuestion && stage === "answer" ? (
+                            <JapaneseText
+                              className={styles.visualAnswerPrompt}
+                              tokens={[
+                                { text: "答", reading: "こた" },
+                                { text: "えてください。" },
+                              ]}
                             />
                           ) : null}
                         </div>
@@ -1698,7 +2113,7 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
                     disabled={!isReadyToStart || isCheckingDevices}
                     aria-busy={isCheckingDevices}
                   >
-                    模擬試験を開始
+                    {homeStartButtonText}
                   </button>
                   {!!startExamHint && <p className={styles.buttonHint}>{startExamHint}</p>}
                 </div>
@@ -1752,7 +2167,7 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
                 disabled={!isReadyToStart || isCheckingDevices}
                 aria-busy={isCheckingDevices}
               >
-                模擬試験を開始
+                    {homeStartButtonText}
               </button>
               {!!startExamHint && <p className={styles.buttonHint}>{startExamHint}</p>}
             </article>

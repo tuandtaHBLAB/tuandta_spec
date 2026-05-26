@@ -3,6 +3,7 @@ import path from "node:path";
 import { NextResponse } from "next/server";
 
 type SaveQuestionPayload = {
+  examSessionId?: string;
   partId: string;
   questionId: string;
   questionPrompt: string;
@@ -24,6 +25,8 @@ type SaveQuestionPayload = {
     image: string;
   }>;
 };
+
+const safePathSegment = (value: string) => value.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 80);
 
 export async function POST(request: Request) {
   try {
@@ -48,13 +51,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing partId or questionId" }, { status: 400 });
     }
 
-    const folderName = `${payload.partId}_${payload.questionId}`;
+    const sessionId = safePathSegment(payload.examSessionId || crypto.randomUUID());
+    const partFolder = safePathSegment(payload.partId);
+    const questionFolder = safePathSegment(payload.questionId);
     const root = path.join(process.cwd(), "exam-artifacts");
-    const folderPath = path.join(root, folderName);
+    const folderPath = path.join(root, sessionId, partFolder, questionFolder);
 
     await mkdir(folderPath, { recursive: true });
 
     const summary = {
+      examSessionId: sessionId,
       partId: payload.partId,
       questionId: payload.questionId,
       questionPrompt: payload.questionPrompt,
@@ -74,7 +80,12 @@ export async function POST(request: Request) {
       await writeFile(path.join(folderPath, "answer.webm"), audioBuffer);
     }
 
-    return NextResponse.json({ ok: true, folderName, folderPath });
+    return NextResponse.json({
+      ok: true,
+      examSessionId: sessionId,
+      folderName: `${sessionId}/${partFolder}/${questionFolder}`,
+      folderPath,
+    });
   } catch (error) {
     return NextResponse.json(
       {

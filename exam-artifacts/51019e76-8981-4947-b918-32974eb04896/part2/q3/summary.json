@@ -1,0 +1,12 @@
+{
+  "examSessionId": "51019e76-8981-4947-b918-32974eb04896",
+  "partId": "part2",
+  "questionId": "q3",
+  "questionPrompt": "会議後に先輩から「よくできていたね」と言われました。どう返しますか。",
+  "startedAt": "2026-05-26T08:32:20.445Z",
+  "endedAt": "2026-05-26T08:33:23.623Z",
+  "highRiskCount": 0,
+  "warnings": 2,
+  "snapshotCount": 20,
+  "nextStep": "Send artifacts to Azure AI scoring pipeline"
+}

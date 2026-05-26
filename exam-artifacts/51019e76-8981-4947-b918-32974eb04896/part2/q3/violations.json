@@ -1,0 +1,16 @@
+[
+  {
+    "id": "90d4694b-9eee-4f35-b9da-a54dc001f1c8",
+    "type": "FACE_MISSING",
+    "severity": "WARNING",
+    "durationMs": 6533,
+    "timestamp": "2026-05-26T08:32:35.111Z"
+  },
+  {
+    "id": "d0c1d6b0-34f8-4869-9f39-db178600c601",
+    "type": "FACE_MISSING",
+    "severity": "WARNING",
+    "durationMs": 3011,
+    "timestamp": "2026-05-26T08:32:31.589Z"
+  }
+]

@@ -1,0 +1,12 @@
+{
+  "examSessionId": "51019e76-8981-4947-b918-32974eb04896",
+  "partId": "part2",
+  "questionId": "q4",
+  "questionPrompt": "取引先から今夜の食事に誘われましたが予定があります。丁寧に断るにはどうしますか。",
+  "startedAt": "2026-05-26T08:33:23.898Z",
+  "endedAt": "2026-05-26T08:34:28.932Z",
+  "highRiskCount": 0,
+  "warnings": 4,
+  "snapshotCount": 20,
+  "nextStep": "Send artifacts to Azure AI scoring pipeline"
+}
