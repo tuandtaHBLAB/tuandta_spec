@@ -1,0 +1,23 @@
+[
+  {
+    "id": "228d6492-61a3-424f-bbad-bf719cf5c53a",
+    "type": "BROWSER_BLUR",
+    "severity": "WARNING",
+    "durationMs": 0,
+    "timestamp": "2026-05-26T08:36:06.300Z"
+  },
+  {
+    "id": "60f83855-94b3-4e1d-99ff-fa21f1c63673",
+    "type": "BROWSER_BLUR",
+    "severity": "WARNING",
+    "durationMs": 0,
+    "timestamp": "2026-05-26T08:35:42.686Z"
+  },
+  {
+    "id": "15dddbff-8c51-4452-826b-06bc92ee49f8",
+    "type": "TAB_SWITCH",
+    "severity": "WARNING",
+    "durationMs": 0,
+    "timestamp": "2026-05-26T08:34:52.828Z"
+  }
+]

@@ -66,7 +66,7 @@
 }
 
 .completedCard {
-  width: min(100%, 590px);
+  width: min(100%, 960px);
   background: linear-gradient(180deg, #d6ebff 0%, #c3e0fb 100%);
   border: 1px solid #bfdbfe;
   border-radius: 28px;
@@ -75,6 +75,15 @@
   justify-items: center;
   gap: 14px;
   text-align: center;
+}
+
+.completedKicker {
+  margin: 0;
+  color: #1d4ed8;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
 }
 
 .statusScreen {
@@ -123,6 +132,103 @@
   color: #1d4ed8;
   font-size: 14px;
   font-weight: 600;
+}
+
+.resultScorePanel {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: baseline;
+  gap: 8px;
+  width: min(100%, 430px);
+  padding: 18px 22px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #bfdbfe;
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.12);
+}
+
+.resultScoreLabel {
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 800;
+  text-align: left;
+}
+
+.resultScoreValue {
+  color: #0b5fa5;
+  font-size: clamp(52px, 8vw, 76px);
+  line-height: 0.9;
+}
+
+.resultScoreMax {
+  color: #64748b;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.resultPartGrid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.resultPartCard {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid #bfdbfe;
+  text-align: left;
+}
+
+.resultPartHeader,
+.resultMetricRow,
+.resultQuestionItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.resultPartTitle {
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.resultPartScore {
+  color: #0b5fa5;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.resultMetricRow {
+  color: #475569;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.resultMetricRow strong {
+  color: #0f172a;
+}
+
+.resultQuestionList {
+  display: grid;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid #dbeafe;
+}
+
+.resultQuestionItem {
+  color: #334155;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.resultQuestionItem strong {
+  color: #1d4ed8;
 }
 
 .completedBtn {
@@ -1349,8 +1455,8 @@
 }
 
 .visualQuestionImageMuted {
-  filter: grayscale(0.8);
-  opacity: 0.34;
+  filter: grayscale(1);
+  opacity: 0.32;
 }
 
 .visualQuestionLabel {
@@ -1387,6 +1493,33 @@
   font-weight: 900;
   text-align: center;
   box-shadow: 0 8px 18px rgba(232, 93, 117, 0.12);
+}
+
+.visualAnswerPrompt {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 4;
+  width: max-content;
+  max-width: min(92%, 680px);
+  margin: 0;
+  padding: clamp(14px, 2.4vw, 22px) clamp(22px, 3.6vw, 42px);
+  transform: translate(-50%, -50%);
+  border: 5px solid #e85d75;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #e85d75;
+  font-size: clamp(24px, 3.4vw, 44px);
+  line-height: 1.2;
+  font-weight: 900;
+  white-space: nowrap;
+  text-align: center;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16);
+}
+
+.visualAnswerPrompt rt {
+  font-size: 0.34em;
+  font-weight: 700;
 }
 
 .part4QuestionScreen {
@@ -1839,6 +1972,11 @@
   padding-top: clamp(8px, 3vh, 32px);
 }
 
+.partInstructionCenter {
+  gap: clamp(16px, 4vh, 34px);
+  padding-top: clamp(4px, 1.5vh, 14px);
+}
+
 .partIntroDescription {
   max-width: 100%;
   font-size: clamp(22px, min(3.3vw, 5.8vh), 40px);
@@ -1880,11 +2018,12 @@
 .partInstructionNotes {
   max-height: 100%;
   overflow: hidden;
+  gap: clamp(4px, 1vh, 8px);
 }
 
 .partInstructionNoteLine {
-  font-size: clamp(19px, min(2.5vw, 4.3vh), 32px);
-  line-height: 1.46;
+  font-size: clamp(18px, min(2.35vw, 3.9vh), 30px);
+  line-height: 1.42;
 }
 
 .readingPromptCard {
@@ -1988,6 +2127,21 @@
     min-height: 56px;
     font-size: 28px;
     min-width: 92%;
+  }
+
+  .resultScorePanel,
+  .resultPartGrid {
+    width: 100%;
+  }
+
+  .resultPartGrid {
+    grid-template-columns: 1fr;
+    max-height: 42dvh;
+    overflow: auto;
+  }
+
+  .resultScoreValue {
+    font-size: 48px;
   }
 
   .stageScreenCard {
@@ -2129,12 +2283,15 @@
   }
 
   .partIntroFooter {
-    width: 100%;
-    max-width: 100%;
-    margin-inline: 0;
+    width: calc(100% + 28px);
+    max-width: none;
+    margin-inline: -14px;
     box-sizing: border-box;
     min-height: 64px;
     padding: 12px 10px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
     overflow: hidden;
   }
 
@@ -2304,8 +2461,14 @@
   }
 
   .partIntroFooter {
+    width: calc(100% + 20px);
+    max-width: none;
+    margin-inline: -10px;
     min-height: clamp(58px, 12vh, 92px);
     padding: clamp(8px, 1.5vh, 12px) 8px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
   }
 
   .partIntroMeta {
@@ -2442,6 +2605,7 @@
 }
 
 .cameraCenterCard {
+  --precheck-media-width: 100%;
   width: min(100%, 680px);
   height: 100%;
   align-content: start;
@@ -2465,7 +2629,7 @@
 }
 
 .cameraCenterCard .cameraShell {
-  width: min(100%, calc(clamp(170px, 40dvh, 340px) * 4 / 3));
+  width: var(--precheck-media-width);
   height: clamp(170px, 40dvh, 340px);
   min-height: 0;
   max-height: none;
@@ -2474,7 +2638,7 @@
 }
 
 .cameraCenterCard .audioMeterTrack {
-  width: min(100%, 540px);
+  width: var(--precheck-media-width);
   justify-self: center;
   height: clamp(10px, 1.8vh, 14px);
   margin: 0;
@@ -2503,6 +2667,7 @@
 
 @media (max-height: 700px) {
   .cameraCenterCard {
+    --precheck-media-width: 100%;
     gap: clamp(6px, 1.2vh, 10px);
   }
 
@@ -2520,7 +2685,7 @@
   }
 
   .cameraCenterCard .cameraShell {
-    width: min(100%, calc(clamp(140px, 34dvh, 260px) * 4 / 3));
+    width: var(--precheck-media-width);
     height: clamp(140px, 34dvh, 260px);
   }
 
@@ -2531,6 +2696,7 @@
 
 @media (max-width: 640px) {
   .cameraCenterCard {
+    --precheck-media-width: 100%;
     gap: clamp(6px, 1.2vh, 10px);
     padding: clamp(10px, 2vh, 14px);
   }
@@ -2544,7 +2710,7 @@
   }
 
   .cameraCenterCard .cameraShell {
-    width: min(100%, calc(clamp(120px, 29dvh, 210px) * 4 / 3));
+    width: var(--precheck-media-width);
     height: clamp(120px, 29dvh, 210px);
   }
 
@@ -2553,6 +2719,10 @@
   .cameraCenterCard .errorText,
   .cameraCenterCard .buttonHint {
     width: min(100%, 420px);
+  }
+
+  .cameraCenterCard .audioMeterTrack {
+    width: var(--precheck-media-width);
   }
 
   .cameraCenterCard .precheckActions,

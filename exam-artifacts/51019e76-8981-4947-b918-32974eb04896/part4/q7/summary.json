@@ -1,0 +1,12 @@
+{
+  "examSessionId": "51019e76-8981-4947-b918-32974eb04896",
+  "partId": "part4",
+  "questionId": "q7",
+  "questionPrompt": "どうして日本語の勉強を始めたのか。",
+  "startedAt": "2026-05-26T08:38:04.730Z",
+  "endedAt": "2026-05-26T08:40:04.864Z",
+  "highRiskCount": 0,
+  "warnings": 4,
+  "snapshotCount": 20,
+  "nextStep": "Send artifacts to Azure AI scoring pipeline"
+}

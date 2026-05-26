@@ -1,0 +1,12 @@
+{
+  "examSessionId": "51019e76-8981-4947-b918-32974eb04896",
+  "partId": "part3",
+  "questionId": "q5",
+  "questionPrompt": "職場で先輩2人が話しています。会話を聞いて、あなたも会話に入ってください。",
+  "startedAt": "2026-05-26T08:34:51.542Z",
+  "endedAt": "2026-05-26T08:36:10.714Z",
+  "highRiskCount": 0,
+  "warnings": 3,
+  "snapshotCount": 3,
+  "nextStep": "Send artifacts to Azure AI scoring pipeline"
+}

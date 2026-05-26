@@ -1,0 +1,30 @@
+[
+  {
+    "id": "8b9c078f-9aeb-460c-b387-2a4ad7834f95",
+    "type": "FACE_MISSING",
+    "severity": "WARNING",
+    "durationMs": 3011,
+    "timestamp": "2026-05-26T08:33:59.164Z"
+  },
+  {
+    "id": "ddfd678d-f1e9-4126-8084-96eb0f4af0ae",
+    "type": "FACE_MISSING",
+    "severity": "WARNING",
+    "durationMs": 3001,
+    "timestamp": "2026-05-26T08:33:45.444Z"
+  },
+  {
+    "id": "aad997fe-c797-435b-984c-478b91295ab9",
+    "type": "FACE_MISSING",
+    "severity": "WARNING",
+    "durationMs": 6529,
+    "timestamp": "2026-05-26T08:33:31.291Z"
+  },
+  {
+    "id": "899c05bb-7485-40c4-9217-7cb7bbfa86f4",
+    "type": "FACE_MISSING",
+    "severity": "WARNING",
+    "durationMs": 3006,
+    "timestamp": "2026-05-26T08:33:27.768Z"
+  }
+]

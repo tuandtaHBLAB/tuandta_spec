@@ -1,0 +1,35 @@
+{
+  "ok": true,
+  "provider": "mock-azure-speech",
+  "examSessionId": "51019e76-8981-4947-b918-32974eb04896",
+  "partId": "part1",
+  "partTitle": "Part 1",
+  "language": "ja-JP",
+  "scoredAt": "2026-05-26T08:30:42.188Z",
+  "summary": {
+    "questionCount": 1,
+    "pronunciationScore": 91,
+    "accuracyScore": 93,
+    "fluencyScore": 88
+  },
+  "questions": [
+    {
+      "questionId": "q1",
+      "questionPrompt": "すみません、原田さん、ちょっとお願いがあるんですが、よろしいでしょうか。あの、明日の午前9時から会議があるので、その準備を手伝ってもらいたいんです。実は人数が多い会議なので、椅子と机を倉庫から運ばなければならなくて…。それで、明日早めに出社して、一緒にやってもらえませんか。",
+      "assessmentMode": "scripted",
+      "mockTranscript": "すみません、原田さん、ちょっとお願いがあるんですが、よろしいでしょうか。あの、明日の午前9時から会議があるので、その準備を手伝ってもらいたいんです。実は人数が多い会議なので、椅子と机を倉庫から運ばなければならなくて…。それで、明日早めに出社して、一緒にやってもらえませんか。",
+      "audio": {
+        "fileName": "part1_q1.webm",
+        "size": 725794
+      },
+      "azurePronunciation": {
+        "pronunciationScore": 91,
+        "accuracyScore": 93,
+        "fluencyScore": 88,
+        "completenessScore": 91,
+        "referenceText": "すみません、原田さん、ちょっとお願いがあるんですが、よろしいでしょうか。あの、明日の午前9時から会議があるので、その準備を手伝ってもらいたいんです。実は人数が多い会議なので、椅子と机を倉庫から運ばなければならなくて…。それで、明日早めに出社して、一緒にやってもらえませんか。",
+        "languageNote": "Mocked response. Real Azure Speech Pronunciation Assessment should use the audio plus language/referenceText."
+      }
+    }
+  ]
+}

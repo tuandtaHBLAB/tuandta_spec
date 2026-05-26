@@ -3,6 +3,6 @@ $ next dev --hostname 127.0.0.1 --port 3000
 ▲ Next.js 16.2.6 (Turbopack)
 - Local:         http://127.0.0.1:3000
 - Network:       http://127.0.0.1:3000
-✓ Ready in 830ms
+✓ Ready in 2.6s
 [?25h
 info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.

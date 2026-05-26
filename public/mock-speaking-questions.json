@@ -26,7 +26,8 @@
           { "text": "てください。" }
         ]
       ],
-      "introAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+      "startAudioUrl": "/sound/Part1/Part1_start.mp3",
+      "introAudioUrl": "/sound/Part1/Part1_intro.mp3",
       "startWithinSeconds": 60,
       "questions": [
         {
@@ -84,7 +85,8 @@
               { "text": "にやってもらえませんか。" }
             ]
           ],
-          "questionAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
+          "questionAudioUrl": "/sound/Part1/Part1_15sec.mp3",
+          "answerAudioUrl": "/sound/Part1/Part1_Please_Read.mp3",
           "prepSeconds": 15,
           "answerSeconds": 45,
           "tips": "発音とアクセントを意識しながら、自然な速さで読んでください。"
@@ -143,7 +145,9 @@
           { "text": "めます。" }
         ]
       ],
-      "introAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+      "startAudioUrl": "/sound/Part2/Part2_start.mp3",
+      "introAudioUrl": "/sound/Part2/Part2_intro.mp3",
+      "instructionSeconds": 20,
       "startWithinSeconds": 60,
       "questions": [
         {
@@ -151,8 +155,8 @@
           "prompt": "先輩から「同僚の結婚祝いを選びたい」と相談されました。どのように提案しますか。",
           "imageUrl": "/part2_1.png",
           "imageAlt": "Part 2 question 1 image",
-          "questionAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3",
-          "prepSeconds": 15,
+          "questionAudioUrl": "/sound/Part2/Part2_Q1.mp3",
+          "prepSeconds": 28,
           "answerSeconds": 30,
           "tips": "理由、予算、渡し方まで具体的に話しましょう。"
         },
@@ -161,8 +165,8 @@
           "prompt": "会議後に先輩から「よくできていたね」と言われました。どう返しますか。",
           "imageUrl": "/part2_2.png",
           "imageAlt": "Part 2 question 2 image",
-          "questionAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3",
-          "prepSeconds": 15,
+          "questionAudioUrl": "/sound/Part2/Part2_Q2.mp3",
+          "prepSeconds": 33,
           "answerSeconds": 30,
           "tips": "感謝と謙虚さが伝わる表現を使いましょう。"
         },
@@ -171,8 +175,8 @@
           "prompt": "取引先から今夜の食事に誘われましたが予定があります。丁寧に断るにはどうしますか。",
           "imageUrl": "/part2_3.png",
           "imageAlt": "Part 2 question 3 image",
-          "questionAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3",
-          "prepSeconds": 15,
+          "questionAudioUrl": "/sound/Part2/Part2_Q3.mp3",
+          "prepSeconds": 35,
           "answerSeconds": 30,
           "tips": "相手への配慮と代替案を入れると自然です。"
         }
@@ -228,7 +232,9 @@
           { "text": "めます。" }
         ]
       ],
-      "introAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+      "startAudioUrl": "/sound/Part3/Part3_start.mp3",
+      "introAudioUrl": "/sound/Part3/Part3_intro.mp3",
+      "instructionSeconds": 18,
       "startWithinSeconds": 60,
       "questions": [
         {
@@ -236,8 +242,8 @@
           "prompt": "職場で先輩2人が話しています。会話を聞いて、あなたも会話に入ってください。",
           "imageUrl": "/part3_1.png",
           "imageAlt": "Part 3 question 1 image",
-          "questionAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3",
-          "prepSeconds": 10,
+          "questionAudioUrl": "/sound/Part3/Part3_Q1.mp3",
+          "prepSeconds": 39,
           "answerSeconds": 40,
           "tips": "先輩Aと先輩Bの会話に自然に入るつもりで話しましょう。"
         },
@@ -246,8 +252,8 @@
           "prompt": "友達2人が食事をしながら話しています。会話を聞いて、あなたも会話に入ってください。",
           "imageUrl": "/part3_2.png",
           "imageAlt": "Part 3 question 2 image",
-          "questionAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3",
-          "prepSeconds": 10,
+          "questionAudioUrl": "/sound/Part3/Part3_Q2.mp3",
+          "prepSeconds": 50,
           "answerSeconds": 40,
           "tips": "友達Aと友達Bに返事をするつもりで、短く自然に話しましょう。"
         }
@@ -300,7 +306,9 @@
           { "text": "めます。" }
         ]
       ],
-      "introAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+      "startAudioUrl": "/sound/Part4/Part4_start.mp3",
+      "introAudioUrl": "/sound/Part4/Part4_intro.mp3",
+      "instructionSeconds": 19,
       "startWithinSeconds": 60,
       "questions": [
         {
@@ -322,7 +330,8 @@
             ]
           ],
           "imageAlt": "Part 4 question 1 theme: why did you start studying Japanese?",
-          "questionAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-14.mp3",
+          "questionAudioUrl": "/sound/Part4/Part4_Q1.mp3",
+          "answerAudioUrl": "/sound/Part4/Part4_Q1_Let_speach.mp3",
           "prepSeconds": 60,
           "answerSeconds": 60,
           "tips": "日本語の勉強を始めた理由を具体的に話しましょう。"
@@ -365,7 +374,8 @@
             ]
           ],
           "imageAlt": "Part 4 question 2 theme: thoughts about changing jobs, with merits and demerits",
-          "questionAudioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3",
+          "questionAudioUrl": "/sound/Part4/Part4_Q2.mp3",
+          "answerAudioUrl": "/sound/Part4/Part4_Q2_Let_speech.mp3",
           "prepSeconds": 60,
           "answerSeconds": 60,
           "tips": "転職のメリットとデメリットをあげて、自分の考えを説明しましょう。"

@@ -1,0 +1,53 @@
+{
+  "ok": true,
+  "provider": "mock-azure-speech",
+  "examSessionId": "51019e76-8981-4947-b918-32974eb04896",
+  "partId": "part3",
+  "partTitle": "Part 3",
+  "language": "ja-JP",
+  "scoredAt": "2026-05-26T08:37:41.915Z",
+  "summary": {
+    "questionCount": 2,
+    "pronunciationScore": 86,
+    "accuracyScore": 88,
+    "fluencyScore": 83
+  },
+  "questions": [
+    {
+      "questionId": "q5",
+      "questionPrompt": "職場で先輩2人が話しています。会話を聞いて、あなたも会話に入ってください。",
+      "assessmentMode": "unscripted",
+      "mockTranscript": "Mock transcript for q5. Replace this with Azure Speech recognized text.",
+      "audio": {
+        "fileName": "part3_q5.webm",
+        "size": 641752
+      },
+      "azurePronunciation": {
+        "pronunciationScore": 87,
+        "accuracyScore": 89,
+        "fluencyScore": 84,
+        "completenessScore": null,
+        "referenceText": null,
+        "languageNote": "Mocked response. Real Azure Speech Pronunciation Assessment should use the audio plus language/referenceText."
+      }
+    },
+    {
+      "questionId": "q6",
+      "questionPrompt": "友達2人が食事をしながら話しています。会話を聞いて、あなたも会話に入ってください。",
+      "assessmentMode": "unscripted",
+      "mockTranscript": "Mock transcript for q6. Replace this with Azure Speech recognized text.",
+      "audio": {
+        "fileName": "part3_q6.webm",
+        "size": 644650
+      },
+      "azurePronunciation": {
+        "pronunciationScore": 85,
+        "accuracyScore": 87,
+        "fluencyScore": 82,
+        "completenessScore": null,
+        "referenceText": null,
+        "languageNote": "Mocked response. Real Azure Speech Pronunciation Assessment should use the audio plus language/referenceText."
+      }
+    }
+  ]
+}
