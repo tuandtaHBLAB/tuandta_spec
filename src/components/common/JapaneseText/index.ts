@@ -1,0 +1,1 @@
+export { JapaneseText } from "./JapaneseText";

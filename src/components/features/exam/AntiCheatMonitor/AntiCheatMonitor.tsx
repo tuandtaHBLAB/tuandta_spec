@@ -2,9 +2,24 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
-import styles from "@/app/page.module.css";
-import { CountdownTimer } from "@/components/countdown-timer";
-import { useCountdown } from "@/hooks/use-countdown";
+import styles from "@/components/features/exam/Exam.module.css";
+import { DevPartJump } from "@/components/features/exam/DevPartJump";
+import { ExamAudioAssets } from "@/components/features/exam/ExamAudioAssets";
+import { FloatingProctor } from "@/components/features/exam/FloatingProctor";
+import { isFocusedExamStage } from "@/helpers";
+import { HomeScreen } from "@/components/features/exam/HomeScreen";
+import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
+import { ExamNoticeScreen } from "@/components/features/exam/ExamNoticeScreen";
+import { MicTestScreen } from "@/components/features/exam/MicTestScreen";
+import { PartInstructionScreen } from "@/components/features/exam/PartInstructionScreen";
+import { PartIntroScreen } from "@/components/features/exam/PartIntroScreen";
+import { QuestionScreen } from "@/components/features/exam/QuestionScreen";
+import { CompletedExamScreen } from "@/components/features/exam/CompletedExamScreen";
+import { StatusMessageScreen } from "@/components/features/exam/StatusMessageScreen";
+import type { CountdownTimerVariant, ExamStage, FuriganaToken, Part, Question } from "@/types";
+import { useCountdown } from "@/hooks";
+import { getDictionary } from "@/i18n/dictionaries";
+import { defaultLocale, type Locale } from "@/i18n/config";
 
 type Severity = "INFO" | "WARNING" | "HIGH_RISK";
 type ViolationType =
@@ -28,35 +43,6 @@ type SnapshotLog = {
   reason: ViolationType;
   timestamp: string;
   image: string;
-};
-
-type Question = {
-  id: string;
-  prompt: string;
-  promptLines?: FuriganaToken[][];
-  imageUrl?: string;
-  imageAlt?: string;
-  imageLabelTokens?: FuriganaToken[];
-  questionLabelTokens?: FuriganaToken[];
-  questionAudioUrl?: string;
-  answerAudioUrl?: string;
-  prepSeconds: number;
-  answerSeconds: number;
-  tips: string;
-};
-
-type Part = {
-  id: string;
-  title: string;
-  description: string;
-  introCategoryTokens?: FuriganaToken[];
-  introHeadlineTokens?: FuriganaToken[];
-  introNoteLines?: FuriganaToken[][];
-  startAudioUrl?: string;
-  introAudioUrl?: string;
-  instructionSeconds?: number;
-  startWithinSeconds: number;
-  questions: Question[];
 };
 
 type QuestionData = {
@@ -109,24 +95,6 @@ type PartScore = {
   }>;
 };
 
-type ExamStage =
-  | "home"
-  | "mic_test"
-  | "exam_notice"
-  | "part_intro"
-  | "part_instruction"
-  | "prep"
-  | "answer"
-  | "saving"
-  | "timeout"
-  | "completed"
-  | "disqualified";
-
-type FuriganaToken = {
-  text: string;
-  reading?: string;
-};
-
 const safePlay = async (media: HTMLMediaElement | null) => {
   if (!media) return;
   try {
@@ -136,27 +104,12 @@ const safePlay = async (media: HTMLMediaElement | null) => {
   }
 };
 
-const CHECKPOINTS = [
-  "帽子・マスク・サングラスは外してください。",
-  "顔が正面に映るよう、明るい場所で受験してください。",
-  "試験中はタブ切り替えやブラウザ離脱をしないでください。",
-  "マイク付きイヤホンと安定した通信環境を準備してください。",
-];
-
 const LOOK_AWAY_DEG = 25;
 const HEAD_DOWN_DEG = 20;
 const MAX_HIGH_RISK = 3;
 const MIC_TEST_SECONDS = 60;
 const EXAM_NOTICE_SECONDS = 20;
 const PART_INSTRUCTION_SECONDS = 10;
-const VIOLATION_LABELS: Record<ViolationType, string> = {
-  FACE_MISSING: "顔の未検出",
-  MULTIPLE_FACES: "複数人の映り込み",
-  LOOK_AWAY: "視線逸脱",
-  HEAD_DOWN: "下向き姿勢",
-  TAB_SWITCH: "タブ切り替え",
-  BROWSER_BLUR: "ブラウザ離脱",
-};
 
 const MIC_TEST_QUESTIONS: { id: number; tokens: FuriganaToken[] }[] = [
   {
@@ -210,106 +163,9 @@ const PART1_PLEASE_READ_AUDIO_URL = "/sound/Part1/Part1_Please_Read.mp3";
 const PART1_INSTRUCTION_SECONDS = 11;
 const SPEECH_ASSESSMENT_LANGUAGE = "ja-JP";
 
-const EXAM_NOTICE_ITEMS: FuriganaToken[][] = [
-  [
-    { text: "試験時間", reading: "しけんじかん" },
-    { text: "は" },
-    { text: "約", reading: "やく" },
-    { text: "15" },
-    { text: "分", reading: "ふん" },
-    { text: "です。" },
-  ],
-  [
-    { text: "問題", reading: "もんだい" },
-    { text: "は" },
-    { text: "全部", reading: "ぜんぶ" },
-    { text: "で8" },
-    { text: "問", reading: "もん" },
-    { text: "です。" },
-  ],
-  [
-    { text: "試験", reading: "しけん" },
-    { text: "を" },
-    { text: "始", reading: "はじ" },
-    { text: "めたら、" },
-    { text: "戻", reading: "もど" },
-    { text: "ること、" },
-    { text: "途中", reading: "とちゅう" },
-    { text: "でやめることはできません。" },
-  ],
-];
-
-function BanOverlay() {
-  return (
-    <>
-      <circle cx="24" cy="24" r="19" stroke="currentColor" strokeWidth="2.2" fill="none" />
-      <path d="M13 35L35 13" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-    </>
-  );
-}
-
-function NoHatIcon() {
-  return (
-    <svg viewBox="0 0 48 48" aria-hidden focusable="false">
-      <BanOverlay />
-      <path
-        d="M14 26C14 21 18.5 18 24 18C29.5 18 34 21 34 26V27H14V26Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        fill="none"
-      />
-      <path d="M10 30H38" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function NoGlassesIcon() {
-  return (
-    <svg viewBox="0 0 48 48" aria-hidden focusable="false">
-      <BanOverlay />
-      <rect x="12" y="21" width="10" height="7" rx="2.2" stroke="currentColor" strokeWidth="2" fill="none" />
-      <rect x="26" y="21" width="10" height="7" rx="2.2" stroke="currentColor" strokeWidth="2" fill="none" />
-      <path d="M22 24H26" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function NoMaskIcon() {
-  return (
-    <svg viewBox="0 0 48 48" aria-hidden focusable="false">
-      <BanOverlay />
-      <rect x="16" y="20" width="16" height="12" rx="3" stroke="currentColor" strokeWidth="2" fill="none" />
-      <path d="M16 23C14 23 13 24 12 26" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M32 23C34 23 35 24 36 26" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M20 25H28M20 28H28" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function JapaneseText({
-  tokens,
-  className,
-}: {
-  tokens: FuriganaToken[];
-  className?: string;
-}) {
-  return (
-    <p className={className}>
-      {tokens.map((token, index) =>
-        token.reading ? (
-          <ruby key={`${token.text}-${index}`}>
-            {token.text}
-            <rt>{token.reading}</rt>
-          </ruby>
-        ) : (
-          <span key={`${token.text}-${index}`}>{token.text}</span>
-        ),
-      )}
-    </p>
-  );
-}
-
-export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
+export function AntiCheatMonitor({ locale, serverTime }: { locale: Locale; serverTime: string }) {
+  const dictionary = getDictionary(locale ?? defaultLocale);
+  const ui = dictionary.exam;
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const mobileVideoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -357,7 +213,7 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
   const [, setIsCameraChecked] = useState(false);
   const [, setIsMicChecked] = useState(false);
   const [isCheckingDevices, setIsCheckingDevices] = useState(false);
-  const [detectorStatus, setDetectorStatus] = useState("フェイス検出は未初期化です");
+  const [detectorStatus, setDetectorStatus] = useState(ui.detectorInitialStatus);
   const [isCameraReady, setIsCameraReady] = useState(false);
 
   const [highRiskCount, setHighRiskCount] = useState(0);
@@ -419,10 +275,10 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
         const data = (await response.json()) as QuestionData;
         setQuestionData(data);
       } catch {
-        setLoadError("模擬問題データの読み込みに失敗しました。");
+        setLoadError(ui.loadError);
       }
     })();
-  }, []);
+  }, [ui.loadError]);
 
   const currentPart = questionData?.parts[partIndex] ?? null;
   const currentQuestion = currentPart?.questions[questionIndex] ?? null;
@@ -634,7 +490,7 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
       if (severity === "HIGH_RISK") {
         setHighRiskCount((prev) => {
           const next = prev + 1;
-          setHighRiskPopup(`é‡大警告: ${VIOLATION_LABELS[type]}（${next}/${MAX_HIGH_RISK}）`);
+          setHighRiskPopup(ui.highRiskWarning(ui.violationLabels[type], next, MAX_HIGH_RISK));
           if (next >= MAX_HIGH_RISK) {
             setStage("disqualified");
             pausePhaseCountdown();
@@ -655,12 +511,13 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
       pausePartInstructionCountdown,
       pausePartIntroCountdown,
       pausePhaseCountdown,
+      ui,
     ],
   );
 
   const initDetector = useCallback(async () => {
     if (faceLandmarkerRef.current) return;
-    setDetectorStatus("フェイス検出モデルを読み込み中...");
+    setDetectorStatus(ui.detectorLoading);
 
     const vision = await FilesetResolver.forVisionTasks(
       "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm",
@@ -676,12 +533,12 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
       outputFacialTransformationMatrixes: true,
       numFaces: 2,
     });
-    setDetectorStatus("フェイス検出の準備が完了しました");
-  }, []);
+    setDetectorStatus(ui.detectorReady);
+  }, [ui.detectorLoading, ui.detectorReady]);
 
   const startCamera = useCallback(async () => {
     setCameraError("");
-    setDeviceCheckStatus("Opening camera and mic...");
+    setDeviceCheckStatus(ui.openingDevices);
     if (audioMeterFrameRef.current) {
       window.cancelAnimationFrame(audioMeterFrameRef.current);
       audioMeterFrameRef.current = null;
@@ -751,24 +608,24 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
 
       setIsCameraChecked(true);
       setIsMicChecked(true);
-      setDeviceCheckStatus("Camera and mic are ready.");
+      setDeviceCheckStatus(ui.devicesReady);
       setIsCameraReady(true);
       return true;
     } catch {
       setIsCameraChecked(false);
       setIsMicChecked(false);
-      setCameraError("カメラを起動できません。権限設定を確認して再試行してください。");
-      setDetectorStatus("フェイス検出の初期化でエラーが発生しました");
+      setCameraError(ui.cameraStartError);
+      setDetectorStatus(ui.detectorError);
       setIsCameraReady(false);
       return false;
     }
-  }, [initDetector]);
+  }, [initDetector, ui.cameraStartError, ui.detectorError, ui.devicesReady, ui.openingDevices]);
 
   const checkMicAndCamera = useCallback(async () => {
     if (isCheckingDevices) return;
     setIsCheckingDevices(true);
     setCameraError("");
-    setDeviceCheckStatus("Checking mic and camera...");
+    setDeviceCheckStatus(ui.checkingDevices);
     setIsCameraChecked(false);
     setIsMicChecked(false);
 
@@ -788,16 +645,16 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
 
       if (!hasCamera || !hasMic) {
         setIsCheckingDevices(false);
-        setDeviceCheckStatus("カメラまたはマイクが見つかりません。両方の接続を確認してください。");
+        setDeviceCheckStatus(ui.missingDevice);
         return;
       }
 
-      setDeviceCheckStatus("チェック完了: カメラとマイクは利用可能です。");
+      setDeviceCheckStatus(ui.devicesCheckComplete);
     } catch {
-      setDeviceCheckStatus("カメラは起動しましたが、デバイス一覧を確認できませんでした。");
+      setDeviceCheckStatus(ui.devicesListError);
     }
     setIsCheckingDevices(false);
-  }, [isCheckingDevices, startCamera]);
+  }, [isCheckingDevices, startCamera, ui.checkingDevices, ui.devicesCheckComplete, ui.devicesListError, ui.missingDevice]);
 
   const ensureDevicesReady = useCallback(async () => {
     if (isCheckingDevices) return false;
@@ -807,7 +664,7 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
       setCameraError("");
       setIsCameraChecked(true);
       setIsMicChecked(true);
-      setDeviceCheckStatus("Camera and mic are ready.");
+      setDeviceCheckStatus(ui.devicesReady);
       setIsCheckingDevices(false);
       return true;
     }
@@ -815,7 +672,7 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
     const started = await startCamera();
     setIsCheckingDevices(false);
     return started;
-  }, [isCameraReady, isCheckingDevices, startCamera]);
+  }, [isCameraReady, isCheckingDevices, startCamera, ui.devicesReady]);
 
   const checkCameraOnly = useCallback(async () => {
     setCameraError("");
@@ -836,12 +693,12 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
         await safePlay(mobileVideoRef.current);
       }
       setIsCameraChecked(true);
-      setDeviceCheckStatus("カメラチェック完了");
+      setDeviceCheckStatus(ui.cameraCheckComplete);
     } catch {
       setIsCameraChecked(false);
-      setCameraError("カメラにアクセスできません。権限を確認してください。");
+      setCameraError(ui.cameraAccessError);
     }
-  }, []);
+  }, [ui.cameraAccessError, ui.cameraCheckComplete]);
 
   const checkMicOnly = useCallback(async () => {
     setCameraError("");
@@ -853,12 +710,12 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
       });
       micProbe.getTracks().forEach((track) => track.stop());
       setIsMicChecked(true);
-      setDeviceCheckStatus("マイクチェック完了");
+      setDeviceCheckStatus(ui.micCheckComplete);
     } catch {
       setIsMicChecked(false);
-      setCameraError("マイクにアクセスできません。権限を確認してください。");
+      setCameraError(ui.micAccessError);
     }
-  }, []);
+  }, [ui.micAccessError, ui.micCheckComplete]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -1127,9 +984,9 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
       const others = prev.filter((item) => item.partId !== score.partId);
       return [...others, score].sort((a, b) => a.partId.localeCompare(b.partId));
     });
-    setPersistStatus(`Scored ${part.title}: ${score.summary.pronunciationScore}/100`);
+    setPersistStatus(ui.scorePersisted(part.title, score.summary.pronunciationScore));
     return score;
-  }, []);
+  }, [ui]);
 
   const saveQuestionArtifacts = useCallback(
     async (endedAt: string, audioBlob: Blob | null) => {
@@ -1169,12 +1026,12 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
       });
 
       if (!response.ok) {
-        setPersistStatus("試験データの保存に失敗しました。サーバーログを確認してください。");
+        setPersistStatus(ui.saveFailed);
         return null;
       }
 
       const data = (await response.json()) as { folderName: string };
-      setPersistStatus(`保存先フォルダ: ${data.folderName}`);
+      setPersistStatus(ui.savedFolder(data.folderName));
 
       const answerForScoring: PartAnswerForScoring = {
         examSessionId: examSessionIdRef.current,
@@ -1198,7 +1055,7 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
 
       return answerForScoring;
     },
-    [currentPart, currentQuestion, highRiskCount, logs, questionStartAt, snapshots],
+    [currentPart, currentQuestion, highRiskCount, logs, questionStartAt, snapshots, ui],
   );
 
   const gotoNextQuestion = useCallback(async () => {
@@ -1220,7 +1077,7 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
         await scorePartAnswers(currentPart);
       }
     } catch {
-      setPersistStatus("保存または採点時にエラーが発生しましたが、試験は継続します。");
+      setPersistStatus(ui.saveOrScoreFailed);
     }
 
     if (isLastQuestionInPart && isLastPart) {
@@ -1263,6 +1120,7 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
     startAnswerRecording,
     startPhaseCountdown,
     stopAnswerRecording,
+    ui,
   ]);
 
   useEffect(() => {
@@ -1505,16 +1363,16 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
   const isPart2VisualQuestion = currentPart?.id === "part2" && isVisualQuestion;
   const isPart3VisualQuestion = currentPart?.id === "part3" && isVisualQuestion;
   const isPart4VisualQuestion = currentPart?.id === "part4" && isVisualQuestion;
-  const timerLabel = stage === "part_intro" ? "開始まで" : stage === "prep" ? "準備" : "回答";
+  const timerLabel = stage === "part_intro" ? ui.timer.startIn : stage === "prep" ? ui.timer.prep : ui.timer.answer;
   const timerValue = stage === "part_intro" ? partIntroRemainingSeconds : phaseRemainingSeconds;
-  const timerVariant = stage === "prep" ? "prep" : stage === "answer" ? "answer" : "default";
+  const timerVariant: CountdownTimerVariant = stage === "prep" ? "prep" : stage === "answer" ? "answer" : "default";
   const visibleMicTestQuestions = stage === "mic_test" ? visibleMicTestQuestionCount : 0;
   const isReadyToStart = !!questionData;
-  const homeStartButtonText = isHomePrecheckComplete ? "Next" : "模擬試験を開始";
+  const homeStartButtonText = isHomePrecheckComplete ? ui.home.next : ui.home.start;
   const startExamHint = isCheckingDevices
-    ? "Camera and mic are opening. Please wait."
+    ? ui.home.openingHint
     : !isReadyToStart
-      ? "Please wait until questions are ready."
+      ? ui.home.loadingQuestionsHint
       : "";
   const totalScoredQuestions = partScores.reduce((sum, score) => sum + score.summary.questionCount, 0);
   const finalPronunciationScore =
@@ -1636,543 +1494,129 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
   );
 
   const isDevPartJumpEnabled = process.env.NODE_ENV !== "production";
-  const isExamMode =
-    stage === "mic_test" ||
-    stage === "exam_notice" ||
-    stage === "part_intro" ||
-    stage === "part_instruction" ||
-    stage === "prep" ||
-    stage === "answer";
+  const isExamMode = isFocusedExamStage(stage);
+  const timer = {
+    label: timerLabel,
+    seconds: timerValue,
+    suffix: ui.timer.suffix,
+    variant: timerVariant,
+  };
 
   return (
     <main className={styles.main}>
-      <audio ref={startCameraTestAudioRef} preload="auto" src={START_CAMERA_TEST_AUDIO_URL} hidden />
-      <audio ref={startPressNextAudioRef} preload="auto" src={START_PRESS_NEXT_AUDIO_URL} hidden />
-      <audio ref={startMicTestAudioRef} preload="auto" src={START_MIC_TEST_AUDIO_URL} hidden />
-      <audio ref={startLetStartAudioRef} preload="auto" src={START_LET_START_AUDIO_URL} hidden />
-      <audio ref={endAudioRef} preload="auto" src={END_AUDIO_URL} hidden />
-      <audio ref={part1StartAudioRef} preload="auto" src={PART1_START_AUDIO_URL} hidden />
-      <audio ref={part1IntroAudioRef} preload="auto" src={PART1_INTRO_AUDIO_URL} hidden />
-      <audio ref={part1PrepAudioRef} preload="auto" src={PART1_PREP_AUDIO_URL} hidden />
-      <audio ref={part1PleaseReadAudioRef} preload="auto" src={PART1_PLEASE_READ_AUDIO_URL} hidden />
+      <LanguageSwitcher locale={locale} />
+      <ExamAudioAssets
+        endAudioRef={endAudioRef}
+        part1IntroAudioRef={part1IntroAudioRef}
+        part1PleaseReadAudioRef={part1PleaseReadAudioRef}
+        part1PrepAudioRef={part1PrepAudioRef}
+        part1StartAudioRef={part1StartAudioRef}
+        startCameraTestAudioRef={startCameraTestAudioRef}
+        startLetStartAudioRef={startLetStartAudioRef}
+        startMicTestAudioRef={startMicTestAudioRef}
+        startPressNextAudioRef={startPressNextAudioRef}
+        urls={{
+          end: END_AUDIO_URL,
+          part1Intro: PART1_INTRO_AUDIO_URL,
+          part1PleaseRead: PART1_PLEASE_READ_AUDIO_URL,
+          part1Prep: PART1_PREP_AUDIO_URL,
+          part1Start: PART1_START_AUDIO_URL,
+          startCameraTest: START_CAMERA_TEST_AUDIO_URL,
+          startLetStart: START_LET_START_AUDIO_URL,
+          startMicTest: START_MIC_TEST_AUDIO_URL,
+          startPressNext: START_PRESS_NEXT_AUDIO_URL,
+        }}
+      />
       {isDevPartJumpEnabled ? (
-        <nav className={styles.devPartJump} aria-label="Development part jump">
-          <p className={styles.devPartJumpLabel}>DEV</p>
-          {Array.from({ length: 4 }, (_, index) => {
-            const part = questionData?.parts[index];
-            return (
-              <button
-                key={index}
-                type="button"
-                className={`${styles.devPartJumpButton} ${partIndex === index ? styles.devPartJumpButtonActive : ""}`}
-                onClick={() => jumpToPartForDev(index)}
-                disabled={!part}
-              >
-                Part {index + 1}
-              </button>
-            );
-          })}
-        </nav>
+        <DevPartJump
+          activePartIndex={partIndex}
+          ariaLabel={ui.devPartJumpAriaLabel}
+          label={ui.devLabel}
+          onJump={jumpToPartForDev}
+          partLabel={ui.devPartLabel}
+          parts={questionData?.parts}
+        />
       ) : null}
 
       {stage === "completed" ? (
-        <section className={styles.completedScreen}>
-          <article className={styles.completedCard}>
-            <p className={styles.completedKicker}>Mock Azure Speech Result</p>
-            <p className={styles.completedText}>これですべての問題は終わりです。</p>
-            <div className={styles.resultScorePanel}>
-              <span className={styles.resultScoreLabel}>Pronunciation</span>
-              <strong className={styles.resultScoreValue}>{finalPronunciationScore}</strong>
-              <span className={styles.resultScoreMax}>/100</span>
-            </div>
-            <div className={styles.resultPartGrid}>
-              {partScores.map((score) => (
-                <section key={score.partId} className={styles.resultPartCard}>
-                  <div className={styles.resultPartHeader}>
-                    <span className={styles.resultPartTitle}>{score.partTitle}</span>
-                    <strong className={styles.resultPartScore}>{score.summary.pronunciationScore}</strong>
-                  </div>
-                  <div className={styles.resultMetricRow}>
-                    <span>Accuracy</span>
-                    <strong>{score.summary.accuracyScore}</strong>
-                  </div>
-                  <div className={styles.resultMetricRow}>
-                    <span>Fluency</span>
-                    <strong>{score.summary.fluencyScore}</strong>
-                  </div>
-                  <div className={styles.resultQuestionList}>
-                    {score.questions.map((question) => (
-                      <div key={question.questionId} className={styles.resultQuestionItem}>
-                        <span>{question.questionId.toUpperCase()}</span>
-                        <strong>{question.azurePronunciation.pronunciationScore}</strong>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              ))}
-            </div>
-            {!!persistStatus && <p className={styles.completedStatus}>{persistStatus}</p>}
-            <button className={styles.completedBtn} onClick={() => backToHome()}>
-              終了
-            </button>
-          </article>
-        </section>
+        <CompletedExamScreen
+          accuracyLabel={ui.completed.accuracy}
+          finalPronunciationScore={finalPronunciationScore}
+          finishLabel={ui.completed.finish}
+          fluencyLabel={ui.completed.fluency}
+          kicker={ui.completed.kicker}
+          onFinish={backToHome}
+          persistStatus={persistStatus}
+          pronunciationLabel={ui.completed.pronunciation}
+          scores={partScores}
+          text={ui.completed.text}
+        />
       ) : stage === "saving" ? (
-        <section className={styles.statusScreen}>
-          <JapaneseText
-            className={styles.statusScreenText}
-            tokens={[
-              { text: "問題", reading: "もんだい" },
-              { text: "は" },
-              { text: "終", reading: "お" },
-              { text: "わりですが、" },
-            ]}
-          />
-          <JapaneseText
-            className={styles.statusScreenText}
-            tokens={[
-              { text: "もう" },
-              { text: "少", reading: "すこ" },
-              { text: "しお" },
-              { text: "待", reading: "ま" },
-              { text: "ちください。" },
-            ]}
-          />
-        </section>
+        <StatusMessageScreen lines={ui.savingTokens} />
       ) : stage === "timeout" ? (
-        <section className={styles.statusScreen}>
-          <JapaneseText
-            className={styles.timeoutScreenText}
-            tokens={[
-              { text: "タイムアウトにより、" },
-              { text: "試験", reading: "しけん" },
-              { text: "は" },
-              { text: "失格", reading: "しっかく" },
-              { text: "となります。" },
-            ]}
-          />
-        </section>
+        <StatusMessageScreen className={styles.timeoutScreenText} lines={[ui.timeoutTokens]} />
       ) : isExamMode ? (
         <section className={styles.examFocusLayout}>
           {stage === "mic_test" ? (
-            <article className={styles.stageScreenCard}>
-              <div className={styles.stageScreenInner}>
-                <h2 className={styles.stageScreenTitle}>マイクのテスト</h2>
-                <JapaneseText
-                  className={styles.stageScreenBody}
-                  tokens={[
-                    { text: "ではマイクのテストをします。" },
-                    { text: "カメラを見て" },
-                    { text: "質問", reading: "しつもん" },
-                    { text: "に" },
-                    { text: "答", reading: "こた" },
-                    { text: "えてください。" },
-                  ]}
-                />
-
-                <ol className={styles.micTestList}>
-                  {MIC_TEST_QUESTIONS.map((question, index) => (
-                    <li key={question.id} className={styles.micTestItem}>
-                      <span className={styles.micTestNumber}>{question.id}.</span>
-                      {index < visibleMicTestQuestions ? (
-                        <JapaneseText className={styles.micTestQuestion} tokens={question.tokens} />
-                      ) : (
-                        <span className={styles.micTestQuestion} aria-hidden />
-                      )}
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            </article>
+            <MicTestScreen
+              bodyTokens={ui.micTest.bodyTokens}
+              questions={MIC_TEST_QUESTIONS}
+              title={ui.micTest.title}
+              visibleQuestionCount={visibleMicTestQuestions}
+            />
           ) : stage === "exam_notice" ? (
-            <article className={styles.stageScreenCard}>
-              <div className={styles.stageScreenInner}>
-                <JapaneseText
-                  className={styles.stageScreenTitle}
-                  tokens={[
-                    { text: "試験", reading: "しけん" },
-                    { text: "を" },
-                    { text: "始", reading: "はじ" },
-                    { text: "めます。" },
-                  ]}
-                />
-
-                <ul className={styles.examNoticeList}>
-                  {EXAM_NOTICE_ITEMS.map((item, index) => (
-                    <li key={index} className={styles.examNoticeItem}>
-                      <span className={styles.examNoticeBullet} aria-hidden />
-                      <JapaneseText className={styles.examNoticeText} tokens={item} />
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </article>
+            <ExamNoticeScreen items={ui.examNotice.items} titleTokens={ui.examNotice.titleTokens} />
           ) : stage === "part_instruction" && currentPart ? (
-            <article className={styles.partInstructionScreen}>
-              <div className={styles.partInstructionHeader}>
-                <p className={styles.partInstructionBadge}>{currentPart.title}</p>
-                {currentPart.introCategoryTokens ? (
-                  <JapaneseText className={styles.partInstructionCategory} tokens={currentPart.introCategoryTokens} />
-                ) : null}
-              </div>
-
-              <div className={styles.partInstructionCenter}>
-                {currentPart.introHeadlineTokens ? (
-                  <div className={styles.partInstructionHeadlinePill}>
-                    <JapaneseText className={styles.partInstructionHeadlineText} tokens={currentPart.introHeadlineTokens} />
-                  </div>
-                ) : (
-                  <p className={styles.partInstructionHeadlineText}>{currentPart.description}</p>
-                )}
-
-                {currentPart.introNoteLines ? (
-                  <div className={styles.partInstructionNotes}>
-                    {currentPart.introNoteLines.map((line, index) => (
-                      <JapaneseText key={index} className={styles.partInstructionNoteLine} tokens={line} />
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-
-              {currentPart.introAudioUrl && currentPart.id !== "part1" ? (
-                <audio ref={partInstructionAudioRef} preload="metadata" src={currentPart.introAudioUrl} hidden />
-              ) : null}
-            </article>
+            <PartInstructionScreen audioRef={partInstructionAudioRef} part={currentPart} />
           ) : stage === "part_intro" && currentPart ? (
-            <article className={styles.partIntroScreen}>
-              <div className={styles.partIntroHeader}>
-                {currentPart.introCategoryTokens ? (
-                  <div className={styles.partIntroLabelBlock}>
-                    <p className={styles.partIntroBadge}>{currentPart.title}</p>
-                    <JapaneseText className={styles.partIntroCategory} tokens={currentPart.introCategoryTokens} />
-                  </div>
-                ) : (
-                  <p className={styles.partIntroBadge}>{currentPart.title}</p>
-                )}
-                <div className={styles.partIntroTimer}>
-                  <CountdownTimer label={timerLabel} seconds={timerValue} variant={timerVariant} />
-                </div>
-              </div>
-
-              <div className={styles.partIntroCenter}>
-                <JapaneseText
-                  className={styles.partIntroDescription}
-                  tokens={[
-                    { text: `${currentPart.title} を` },
-                    { text: "始", reading: "はじ" },
-                    { text: "めます。" },
-                  ]}
-                />
-                <JapaneseText
-                  className={styles.partIntroDescription}
-                  tokens={[
-                    { text: "「スタート」を" },
-                    { text: "押", reading: "お" },
-                    { text: "してください。" },
-                  ]}
-                />
-
-                <button className={`${styles.primaryBtn} ${styles.partIntroStartBtn}`} onClick={startCurrentQuestion}>
-                  スタート
-                </button>
-              </div>
-
-              <div className={styles.partIntroFooter}>
-                <JapaneseText
-                  className={styles.partIntroMeta}
-                  tokens={[
-                    { text: "60" },
-                    { text: "秒", reading: "びょう" },
-                    { text: "をすぎると、" },
-                    { text: "試験", reading: "しけん" },
-                    { text: "が" },
-                    { text: "受", reading: "う" },
-                    { text: "けられません。" },
-                  ]}
-                />
-                <JapaneseText
-                  className={styles.partIntroMeta}
-                  tokens={[
-                    { text: "「スタート」を" },
-                    { text: "押", reading: "お" },
-                    { text: "してください。" },
-                  ]}
-                />
-              </div>
-
-              {currentPart.startAudioUrl && (
-                <audio ref={partAudioRef} preload="metadata" src={currentPart.startAudioUrl} hidden />
-              )}
-            </article>
+            <PartIntroScreen
+              audioRef={partAudioRef}
+              onStart={startCurrentQuestion}
+              part={currentPart}
+              timer={timer}
+              ui={ui.partIntro}
+            />
           ) : (
-            <article
-              className={`${styles.card} ${isVisualQuestion ? styles.visualQuestionScreen : ""} ${
-                isPart4VisualQuestion ? styles.part4QuestionScreen : ""
-              }`}
-            >
-              {!isPart4VisualQuestion ? (
-                <div className={styles.questionTopRow}>
-                {currentPart ? (
-                  <div className={styles.questionPartHeading}>
-                    <p className={styles.questionPartTitle}>{currentPart.title}</p>
-                    {currentPart.introCategoryTokens ? (
-                      <JapaneseText className={styles.questionPartCategory} tokens={currentPart.introCategoryTokens} />
-                    ) : null}
-                  </div>
-                ) : (
-                  <div />
-                )}
-                <div className={styles.partIntroTimer}>
-                  <CountdownTimer label={timerLabel} seconds={timerValue} variant={timerVariant} />
-                </div>
-                </div>
-              ) : null}
-
-            {stage === "part_intro" && currentPart ? (
-              <div className={styles.stack}>
-                <p>{currentPart.description}</p>
-                {currentPart.introAudioUrl && (
-                  <audio ref={partAudioRef} preload="metadata" src={currentPart.introAudioUrl} hidden />
-                )}
-                <button className={styles.primaryBtn} onClick={startCurrentQuestion}>
-                  このパートを開始
-                </button>
-              </div>
-            ) : (
-              currentQuestion && (
-                <div className={styles.stack}>
-                  {currentQuestion.questionAudioUrl && (
-                    <audio ref={questionAudioRef} preload="metadata" src={currentQuestion.questionAudioUrl} hidden />
-                  )}
-                  {currentQuestion.answerAudioUrl && (
-                    <audio ref={answerAudioRef} preload="metadata" src={currentQuestion.answerAudioUrl} hidden />
-                  )}
-                  {stage === "answer" && !isVisualQuestion ? (
-                    <JapaneseText
-                      className={styles.answerPrompt}
-                      tokens={[
-                        { text: "答", reading: "こた" },
-                        { text: "えてください。" },
-                      ]}
-                    />
-                  ) : null}
-                  {currentQuestion.imageUrl ? (
-                    isPart4VisualQuestion ? (
-                      <div className={styles.part4QuestionStage}>
-                        <div className={styles.part4QuestionTimer}>
-                          <CountdownTimer label={timerLabel} seconds={timerValue} variant={timerVariant} />
-                        </div>
-                        {currentQuestion.promptLines ? (
-                          <div className={styles.part4QuestionPromptCard}>
-                            {currentQuestion.questionLabelTokens ? (
-                              <JapaneseText
-                                className={styles.part4QuestionPromptLabel}
-                                tokens={currentQuestion.questionLabelTokens}
-                              />
-                            ) : null}
-                            <div className={styles.part4QuestionPromptBody}>
-                              {currentQuestion.promptLines.map((line, index) => (
-                                <JapaneseText key={index} className={styles.part4QuestionPromptLine} tokens={line} />
-                              ))}
-                            </div>
-                          </div>
-                        ) : null}
-                        <div className={styles.part4QuestionImageWrap}>
-                          <img
-                            className={`${styles.part4QuestionImage} ${
-                              stage === "answer" ? styles.part4QuestionImageMuted : ""
-                            }`}
-                            src={currentQuestion.imageUrl}
-                            alt={currentQuestion.imageAlt ?? `Part 4 question ${questionNumberInPart}`}
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className={styles.visualQuestionStage}>
-                        <div className={styles.visualQuestionBadge}>{questionNumberInPart}番</div>
-                        <div className={styles.visualQuestionImageCard}>
-                          <img
-                            className={`${styles.visualQuestionImage} ${
-                              (isPart2VisualQuestion || isPart3VisualQuestion) && stage === "answer"
-                                ? styles.visualQuestionImageMuted
-                                : ""
-                            }`}
-                            src={currentQuestion.imageUrl}
-                            alt={currentQuestion.imageAlt ?? `Part ${partIndex + 1} question ${questionNumberInPart}`}
-                          />
-                          {currentQuestion.imageLabelTokens ? (
-                            <JapaneseText className={styles.visualQuestionLabel} tokens={currentQuestion.imageLabelTokens} />
-                          ) : null}
-                          {isPart3VisualQuestion && stage === "answer" ? (
-                            <JapaneseText
-                              className={styles.part3AnswerPrompt}
-                              tokens={[{ text: "はなしてください。" }]}
-                            />
-                          ) : null}
-                          {isPart2VisualQuestion && stage === "answer" ? (
-                            <JapaneseText
-                              className={styles.visualAnswerPrompt}
-                              tokens={[
-                                { text: "答", reading: "こた" },
-                                { text: "えてください。" },
-                              ]}
-                            />
-                          ) : null}
-                        </div>
-                      </div>
-                    )
-                  ) : currentQuestion.promptLines ? (
-                    <div className={`${styles.questionPromptCard} ${styles.readingPromptCard}`}>
-                      {currentQuestion.promptLines.map((line, index) => (
-                        <JapaneseText key={index} className={styles.readingPromptLine} tokens={line} />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className={styles.questionPromptCard}>
-                      <p className={styles.questionPromptLabel}>Question</p>
-                      <p className={styles.questionPromptText}>{currentQuestion.prompt}</p>
-                    </div>
-                  )}
-                </div>
-              )
-            )}
-          </article>
+            <QuestionScreen
+              answerAudioRef={answerAudioRef}
+              currentPart={currentPart}
+              currentQuestion={currentQuestion}
+              isPart2VisualQuestion={isPart2VisualQuestion}
+              isPart3VisualQuestion={isPart3VisualQuestion}
+              isPart4VisualQuestion={isPart4VisualQuestion}
+              isVisualQuestion={isVisualQuestion}
+              onStartCurrentQuestion={startCurrentQuestion}
+              partAudioRef={partAudioRef}
+              partIndex={partIndex}
+              questionAudioRef={questionAudioRef}
+              questionNumberInPart={questionNumberInPart}
+              stage={stage}
+              timer={timer}
+              ui={ui}
+            />
           )}
         </section>
       ) : (
-        <>
-          <section className={styles.hero}>
-            <div>
-              <p className={styles.kicker}>Kotoba Speaking Exam</p>
-              <h1>S-JEP スピーキング模擬試験</h1>
-              <p className={styles.lead}>カメラ監視つきのスピーキング試験フローを体験できます。</p>
-            </div>
-            <p className={styles.serverTime}>サーバー時刻: {serverTime}</p>
-          </section>
-
-          <section className={styles.examLayout}>
-            <article className={`${styles.card} ${styles.desktopCameraCard}`}>
-              <h2>試験開始</h2>
-              {!!loadError && <p className={styles.errorText}>{loadError}</p>}
-              {stage === "home" && (
-                <div className={styles.stack}>
-                  {!!partTimeoutMessage && <p className={styles.errorText}>{partTimeoutMessage}</p>}
-                  <p>全 {totalQuestions} 問です。</p>
-                  <div className={styles.precheckPanel}>
-                    <div className={styles.iconReminderRow} aria-hidden>
-                      <div className={styles.banIcon}>
-                        <NoHatIcon />
-                      </div>
-                      <div className={styles.banIcon}>
-                        <NoGlassesIcon />
-                      </div>
-                      <div className={styles.banIcon}>
-                        <NoMaskIcon />
-                      </div>
-                    </div>
-                    {!!cameraError && (
-                      <div className={styles.precheckActions}>
-                        <button
-                          className={styles.secondaryBtn}
-                          onClick={() => void ensureDevicesReady()}
-                          disabled={isCheckingDevices}
-                          aria-busy={isCheckingDevices}
-                        >
-                          Retry camera and mic
-                        </button>
-                      </div>
-                    )}
-                    {!!deviceCheckStatus && <p className={styles.precheckStatus}>{deviceCheckStatus}</p>}
-                    {!!cameraError && <p className={styles.errorText}>{cameraError}</p>}
-                    <div className={styles.mobileCameraSection}>
-                      <div className={styles.iconReminderRow} aria-hidden>
-                        <div className={styles.banIcon}>
-                          <NoHatIcon />
-                        </div>
-                        <div className={styles.banIcon}>
-                          <NoGlassesIcon />
-                        </div>
-                        <div className={styles.banIcon}>
-                          <NoMaskIcon />
-                        </div>
-                      </div>
-                      <h3>カメラ確認</h3>
-                      <div className={styles.cameraShell}>
-                        <video ref={mobileVideoRef} autoPlay muted playsInline className={styles.camera} />
-                      </div>
-                      <div className={styles.audioMeterTrack}>
-                        <span className={styles.audioMeterMid} />
-                        <span className={styles.audioMeterFill} style={{ width: `${audioLevel}%` }} />
-                      </div>
-                      {!!deviceCheckStatus && <p className={styles.precheckStatus}>{deviceCheckStatus}</p>}
-                    </div>
-                  </div>
-                  <button
-                    className={styles.primaryBtn}
-                    onClick={() => void startExam()}
-                    disabled={!isReadyToStart || isCheckingDevices}
-                    aria-busy={isCheckingDevices}
-                  >
-                    {homeStartButtonText}
-                  </button>
-                  {!!startExamHint && <p className={styles.buttonHint}>{startExamHint}</p>}
-                </div>
-              )}
-
-
-              {stage === "disqualified" && (
-                <div className={styles.failBox}>
-                  <h3>試験は中断されました</h3>
-                  <p>重大違反が3回検出されました。</p>
-                </div>
-              )}
-            </article>
-
-            <article className={`${styles.card} ${styles.cameraCenterCard}`}>
-              <div className={styles.iconReminderRow} aria-hidden>
-                <div className={styles.banIcon}>
-                  <NoHatIcon />
-                </div>
-                <div className={styles.banIcon}>
-                  <NoGlassesIcon />
-                </div>
-                <div className={styles.banIcon}>
-                  <NoMaskIcon />
-                </div>
-              </div>
-              <h2>カメラ確認</h2>
-              <div className={styles.cameraShell}>
-                <video ref={videoRef} autoPlay muted playsInline className={styles.camera} />
-              </div>
-              <div className={styles.audioMeterTrack}>
-                <span className={styles.audioMeterMid} />
-                <span className={styles.audioMeterFill} style={{ width: `${audioLevel}%` }} />
-              </div>
-              {!!deviceCheckStatus && <p className={styles.precheckStatus}>{deviceCheckStatus}</p>}
-              {!!cameraError && (
-                <div className={styles.precheckActions}>
-                  <button
-                    className={styles.secondaryBtn}
-                    onClick={() => void ensureDevicesReady()}
-                    disabled={isCheckingDevices}
-                    aria-busy={isCheckingDevices}
-                  >
-                    Retry camera and mic
-                  </button>
-                </div>
-              )}
-              <button
-                className={styles.primaryBtn}
-                onClick={() => void startExam()}
-                disabled={!isReadyToStart || isCheckingDevices}
-                aria-busy={isCheckingDevices}
-              >
-                    {homeStartButtonText}
-              </button>
-              {!!startExamHint && <p className={styles.buttonHint}>{startExamHint}</p>}
-            </article>
-          </section>
-        </>
+        <HomeScreen
+          audioLevel={audioLevel}
+          cameraError={cameraError}
+          deviceCheckStatus={deviceCheckStatus}
+          homeStartButtonText={homeStartButtonText}
+          isCheckingDevices={isCheckingDevices}
+          isDisqualified={stage === "disqualified"}
+          isHomeStage={stage === "home"}
+          isReadyToStart={isReadyToStart}
+          loadError={loadError}
+          mobileVideoRef={mobileVideoRef}
+          onEnsureDevicesReady={() => void ensureDevicesReady()}
+          onStartExam={() => void startExam()}
+          partTimeoutMessage={partTimeoutMessage}
+          serverTime={serverTime}
+          startExamHint={startExamHint}
+          totalQuestions={totalQuestions}
+          ui={ui.home}
+          videoRef={videoRef}
+        />
       )}
 
       {highRiskPopup && (
@@ -2182,17 +1626,7 @@ export function AntiCheatMonitor({ serverTime }: { serverTime: string }) {
       )}
 
       {isExamMode && (
-        <>
-          <div className={styles.cameraFloating}>
-            <video ref={videoRef} autoPlay muted playsInline className={styles.camera} />
-          </div>
-          <div className={styles.audioMeterFloating}>
-            <div className={styles.audioMeterTrack}>
-              <span className={styles.audioMeterMid} />
-              <span className={styles.audioMeterFill} style={{ width: `${audioLevel}%` }} />
-            </div>
-          </div>
-        </>
+        <FloatingProctor audioLevel={audioLevel} videoRef={videoRef} />
       )}
     </main>
   );
