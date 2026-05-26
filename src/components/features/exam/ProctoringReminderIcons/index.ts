@@ -1,0 +1,1 @@
+export { ProctoringReminderIcons } from "./ProctoringReminderIcons";

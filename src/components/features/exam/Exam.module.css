@@ -12,6 +12,53 @@
   margin: 0 auto;
   display: grid;
   gap: 20px;
+  position: relative;
+}
+
+.languageSwitcher {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 60;
+  display: inline-flex;
+  gap: 6px;
+  padding: 5px;
+  background: rgb(255 255 255 / 88%);
+  border: 1px solid #dbe4ef;
+  border-radius: 999px;
+  box-shadow: 0 12px 28px rgb(15 23 42 / 14%);
+  backdrop-filter: blur(12px);
+}
+
+.languageButton {
+  min-width: 58px;
+  height: 34px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.languageButton:hover {
+  color: #0f172a;
+  background: #eef6ff;
+}
+
+.languageButtonActive {
+  color: #ffffff;
+  background: #2563eb;
+}
+
+.languageButtonActive:hover {
+  color: #ffffff;
+  background: #1d4ed8;
 }
 
 .hero {

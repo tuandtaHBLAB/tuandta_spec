@@ -1,5 +1,5 @@
 import { memo } from "react";
-import styles from "./countdown-timer.module.css";
+import styles from "./CountdownTimer.module.css";
 
 type CountdownTimerVariant = "default" | "prep" | "answer";
 
